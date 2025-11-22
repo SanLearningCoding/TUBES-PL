@@ -1,21 +1,24 @@
 <?php
+
+// Model/StokModel.php
+
 class StokModel {
     protected $db;
 
     public function __construct() {
-        $this->db = \Config\Database::connect();
+        $database = new Database();
+        $this->db = $database->getConnection();
     }
 
     public function createStokPascaUji($id_transaksi, $dataStok) {
-        $builder = $this->db->table('stok_darah');
+        $builder = new QueryBuilder($this->db, 'stok_darah');
         $dataStok['id_transaksi'] = $id_transaksi;
-        $builder->insert($dataStok);
-        return $this->db->insertID();
+        return $builder->insert($dataStok);
     }
 
     public function getDashboardStokRealtime() {
-        $builder = $this->db->table('stok_darah sd');
-        $builder->select("
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select("
             gd.nama_gol_darah,
             gd.rhesus,
             COUNT(sd.id_stok) as total_kantong,
@@ -27,38 +30,44 @@ class StokModel {
         ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah')
         ->where('sd.status_uji', 'lolos')
         ->groupBy('gd.nama_gol_darah, gd.rhesus')
-        ->orderBy('gd.nama_gol_darah, gd.rhesus');
-        
-        return $builder->get()->getResultArray();
+        ->orderBy('gd.nama_gol_darah')
+        ->orderBy('gd.rhesus')
+        ->getResultArray();
     }
 
     public function updateStatusStok($id_stok, $status) {
-        $builder = $this->db->table('stok_darah');
+        $builder = new QueryBuilder($this->db, 'stok_darah');
         return $builder->where('id_stok', $id_stok)
                       ->update(['status' => $status]);
     }
 
-    // method tambahan
     public function getStokTersedia() {
-        $builder = $this->db->table('stok_darah sd');
-        $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi')
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi')
                 ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah')
                 ->join('transaksi_donasi td', 'sd.id_transaksi = td.id_transaksi')
                 ->where('sd.status', 'tersedia')
                 ->where('sd.status_uji', 'lolos')
                 ->where('sd.tanggal_kadaluarsa >=', date('Y-m-d'))
-                ->orderBy('sd.tanggal_kadaluarsa', 'ASC');
-        
-        return $builder->get()->getResultArray();
+                ->orderBy('sd.tanggal_kadaluarsa', 'ASC')
+                ->getResultArray();
     }
 
     public function getStokById($id_stok) {
-        $builder = $this->db->table('stok_darah sd');
-        $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi')
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi')
                 ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah')
                 ->join('transaksi_donasi td', 'sd.id_transaksi = td.id_transaksi')
-                ->where('sd.id_stok', $id_stok);
-        
-        return $builder->get()->getRowArray();
+                ->where('sd.id_stok', $id_stok)
+                ->getRowArray();
+    }
+
+    public function getStokKadaluarsa() {
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus')
+                ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah')
+                ->where('sd.tanggal_kadaluarsa <', date('Y-m-d'))
+                ->orWhere('sd.status', 'kadaluarsa')
+                ->getResultArray();
     }
 }

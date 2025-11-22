@@ -1,43 +1,54 @@
 <?php
+
+// Model/PendonorModel.php
+
 class PendonorModel {
     protected $db;
 
     public function __construct() {
-        $this->db = \Config\Database::connect();
+        $database = new Database();
+        $this->db = $database->getConnection();
     }
 
     public function getRiwayatDonasi($id_pendonor) {
-        $builder = $this->db->table('transaksi_donasi td');
-        $builder->select('td.*, kd.nama_kegiatan, kd.lokasi, p.nama_petugas')
+        $builder = new QueryBuilder($this->db, 'transaksi_donasi td');
+        return $builder->select('td.*, kd.nama_kegiatan, kd.lokasi, p.nama_petugas')
                 ->join('kegiatan_donasi kd', 'td.id_kegiatan = kd.id_kegiatan')
-                ->join('Petugas p', 'td.id_petugas = p.id_petugas', 'left')
+                ->join('petugas p', 'td.id_petugas = p.id_petugas', 'LEFT')
                 ->where('td.id_pendonor', $id_pendonor)
-                ->orderBy('td.tanggal_donasi', 'DESC');
-        
-        return $builder->get()->getResultArray();
+                ->orderBy('td.tanggal_donasi', 'DESC')
+                ->getResultArray();
     }
 
     public function getDaftarPeringatanDonorUlang() {
-        $builder = $this->db->table('pendonor p');
-        $builder->select('p.*, MAX(td.tanggal_donasi) as terakhir_donasi')
-                ->join('transaksi_donasi td', 'p.id_pendonor = td.id_pendonor')
+        $builder = new QueryBuilder($this->db, 'pendonor p');
+        return $builder->select('p.*, MAX(td.tanggal_donasi) as terakhir_donasi')
+                ->join('transaksi_donasi td', 'p.id_pendonor = td.id_pendonor', 'LEFT')
                 ->groupBy('p.id_pendonor')
                 ->having("DATE_ADD(MAX(td.tanggal_donasi), INTERVAL 3 MONTH) <= CURDATE()")
-                ->orHaving("terakhir_donasi IS NULL");
-        
-        return $builder->get()->getResultArray();
+                ->orHaving("terakhir_donasi IS NULL")
+                ->getResultArray();
     }
 
-    // Method tambahan
     public function getAllPendonor() {
-        $builder = $this->db->table('pendonor');
+        $builder = new QueryBuilder($this->db, 'pendonor');
         return $builder->get()->getResultArray();
     }
 
     public function getPendonorById($id_pendonor) {
-        $builder = $this->db->table('pendonor');
+        $builder = new QueryBuilder($this->db, 'pendonor');
         return $builder->where('id_pendonor', $id_pendonor)
-                      ->get()
                       ->getRowArray();
+    }
+
+    public function insertPendonor($data) {
+        $builder = new QueryBuilder($this->db, 'pendonor');
+        return $builder->insert($data);
+    }
+
+    public function updatePendonor($id_pendonor, $data) {
+        $builder = new QueryBuilder($this->db, 'pendonor');
+        return $builder->where('id_pendonor', $id_pendonor)
+                      ->update($data);
     }
 }
