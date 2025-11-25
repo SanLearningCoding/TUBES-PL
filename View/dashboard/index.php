@@ -2,18 +2,15 @@
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
-// AMBIL DATA STATISTIK DARI DATABASE - PERBAIKI PATH
 require_once __DIR__ . '/../../Config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// Hitung total pendonor
 $query = "SELECT COUNT(*) as total FROM pendonor";
 $stmt = $db->prepare($query);
 $stmt->execute();
 $total_pendonor = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-// Untuk statistik lainnya, gunakan nilai default dulu
 $total_stok = 0;
 $transaksi_hari_ini = 0;
 $distribusi_bulan_ini = 0;

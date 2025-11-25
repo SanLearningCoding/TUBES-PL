@@ -1,7 +1,5 @@
 <?php
 
-// Controllers/PetugasController.php
-
 require_once 'Config/Database.php';
 require_once 'Model/PetugasModel.php';
 
@@ -104,7 +102,6 @@ class PetugasController {
     }
 
     public function login() {
-        // Jika sudah login, redirect ke dashboard
         if (isset($_SESSION['isLoggedIn'])) {
             header('Location: index.php?action=dashboard');
             exit;
@@ -147,7 +144,6 @@ class PetugasController {
             }
         }
     
-        // Jika bukan POST request, redirect ke login
         header('Location: index.php?action=login');
         exit;
     }
@@ -164,7 +160,6 @@ class PetugasController {
         $this->view('profile', $data);
     }
 
-    // Method helper untuk check authentication
     private function checkAuth() {
         if (!isset($_SESSION['isLoggedIn'])) {
             $_SESSION['error'] = 'Anda harus login terlebih dahulu';
@@ -176,7 +171,6 @@ class PetugasController {
     private function view($view, $data = []) {
         extract($data);
         
-        // Cek beberapa kemungkinan path view
         $possiblePaths = [
             "View/petugas/$view.php"
         ];
@@ -187,8 +181,7 @@ class PetugasController {
                 return;
             }
         }
-        
-        // Jika view tidak ditemukan
+
         die("View tidak ditemukan: $view. Path yang dicari: " . implode(', ', $possiblePaths));
     }
 }

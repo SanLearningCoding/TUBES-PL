@@ -1,6 +1,5 @@
 <?php
 
-// Model/StokModel.php
 
 class StokModel {
     protected $db;

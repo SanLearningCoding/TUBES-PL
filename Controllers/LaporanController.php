@@ -1,6 +1,5 @@
 <?php
 
-// Controllers/LaporanController.php
 
 require_once 'Config/Database.php';
 require_once 'Model/TransaksiModel.php';

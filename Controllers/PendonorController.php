@@ -1,6 +1,5 @@
 <?php
 
-// Controllers/PendonorController.php
 
 require_once 'Config/Database.php';
 require_once 'Model/PendonorModel.php';
@@ -54,7 +53,6 @@ class PendonorController {
         $this->view('pendonor/riwayat', $data);
     }
 
-    // PERBAIKAN: Method edit dan update untuk kelengkapan
     public function edit($id) {
         $data['pendonor'] = $this->pendonorModel->getPendonorById($id);
         if (!$data['pendonor']) {
@@ -82,9 +80,6 @@ class PendonorController {
             exit;
         }
     }
-
-    // PERBAIKAN: Hapus storePendaftaran karena sudah ada di TransaksiController
-    // atau tambahkan routing jika memang diperlukan
 
     private function view($view, $data = []) {
         extract($data);

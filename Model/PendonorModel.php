@@ -1,6 +1,5 @@
 <?php
 
-// Model/PendonorModel.php
 
 class PendonorModel {
     protected $db;

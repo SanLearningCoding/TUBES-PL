@@ -1,8 +1,5 @@
 <?php
 
-// file baru
-// Model/KegiatanModel.php
-
 class KegiatanModel {
     protected $db;
 

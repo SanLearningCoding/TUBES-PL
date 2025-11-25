@@ -1,6 +1,5 @@
 <?php
 
-// Controllers/StokController.php
 
 require_once 'Config/Database.php';
 require_once 'Model/StokModel.php';
@@ -56,7 +55,6 @@ class StokController {
 
     private function view($view, $data = []) {
         extract($data);
-        // PERBAIKAN: Pastikan path view konsisten
         require_once "View/stok/$view.php";
     }
 }

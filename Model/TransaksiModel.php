@@ -1,6 +1,5 @@
 <?php
 
-// Model/TransaksiModel.php
 
 class TransaksiModel {
     protected $db;

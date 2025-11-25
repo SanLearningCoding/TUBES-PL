@@ -1,7 +1,5 @@
 <?php
 
-// Controllers/TransaksiController.php
-
 require_once 'Config/Database.php';
 require_once 'Model/TransaksiModel.php';
 require_once 'Model/PendonorModel.php';
@@ -86,7 +84,6 @@ class TransaksiController {
   
     private function view($view, $data = []) {
         extract($data);
-        // PERBAIKAN: Pastikan path view konsisten
         require_once "View/transaksi/$view.php";
     }
 }

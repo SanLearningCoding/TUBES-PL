@@ -1,6 +1,5 @@
 <?php
 
-// Controllers/DistribusiController.php
 
 require_once 'Config/Database.php';
 require_once 'Model/DistribusiModel.php';
@@ -70,7 +69,6 @@ class DistribusiController {
 
     private function view($view, $data = []) {
         extract($data);
-        // PERBAIKAN: Pastikan path view konsisten
         require_once "View/distribusi/$view.php";
     }
 }

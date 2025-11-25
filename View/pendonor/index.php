@@ -2,7 +2,6 @@
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
-// AMBIL DATA DARI DATABASE - HANYA YANG TIDAK DIHAPUS
 require_once __DIR__ . '/../../Config/Database.php';
 $database = new Database();
 $db = $database->getConnection();

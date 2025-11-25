@@ -1,7 +1,5 @@
 <?php
 
-// Model/DistribusiModel.php
-
 class DistribusiModel {
     protected $db;
 

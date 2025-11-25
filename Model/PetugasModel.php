@@ -1,6 +1,5 @@
 <?php
 
-// Model/PetugasModel.php
 
 class PetugasModel {
     protected $db;
