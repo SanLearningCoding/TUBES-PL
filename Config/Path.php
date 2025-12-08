@@ -7,5 +7,9 @@ class Path {
     public static function template($template_path) {
         return __DIR__ . '/../View/template/' . $template_path;
     }
+    
+    public static function API() {
+        return './';
+    }
 }
 ?>

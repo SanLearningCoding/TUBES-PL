@@ -1,5 +1,7 @@
 <?php
 
+// Controllers/TransaksiController.php
+
 require_once 'Config/Database.php';
 require_once 'Model/TransaksiModel.php';
 require_once 'Model/PendonorModel.php';
@@ -14,7 +16,7 @@ class TransaksiController {
         $this->transaksiModel = new TransaksiModel();
         $this->pendonorModel = new PendonorModel();
         $this->kegiatanModel = new KegiatanModel();
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) session_start();
     }
 
     public function index() {
@@ -26,8 +28,26 @@ class TransaksiController {
 
     public function storeTransaksi() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $id_pendonor = $_POST['id_pendonor'] ?? 0;
+            
+            // VALIDASI: Pastikan pendonor yang dipilih layak (status kesehatan sehat)
+            $pendonor = $this->pendonorModel->getPendonorById($id_pendonor);
+            
+            if (!$pendonor) {
+                $_SESSION['error'] = 'Pendonor tidak ditemukan!';
+                header('Location: index.php?action=transaksi');
+                exit;
+            }
+            
+            // CEK STATUS KESEHATAN - Kolom is_layak harus 1
+            if (isset($pendonor['is_layak']) && $pendonor['is_layak'] != 1) {
+                $_SESSION['error'] = 'Transaksi ditolak! Pendonor dengan status kesehatan tidak layak tidak dapat melakukan transaksi donasi. Hanya pendonor yang sehat yang dapat melakukan donasi.';
+                header('Location: index.php?action=transaksi');
+                exit;
+            }
+            
             $data = [
-                'id_pendonor' => $_POST['id_pendonor'],
+                'id_pendonor' => $id_pendonor,
                 'id_kegiatan' => $_POST['id_kegiatan'],
                 'id_petugas' => $_SESSION['id_petugas'],
                 'tanggal_donasi' => $_POST['tanggal_donasi'],
@@ -84,6 +104,7 @@ class TransaksiController {
   
     private function view($view, $data = []) {
         extract($data);
-        require_once "View/transaksi/$view.php";
+        // PERBAIKAN: Pastikan path view konsisten
+        require_once "View/$view.php";
     }
 }

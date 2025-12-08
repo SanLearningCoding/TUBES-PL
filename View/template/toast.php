@@ -1,0 +1,622 @@
+<div id="toast-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 90%; max-width: 500px;"></div>
+<div id="alert-container" style="position: fixed; top: 80px; left: 0; right: 0; z-index: 10000; padding: 20px; pointer-events: none;"></div>
+
+<style>
+.toast-notification {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    animation: slideInTop 0.3s ease-out;
+    border-left: 5px solid #ddd;
+}
+
+.toast-notification.success {
+    background: #f0f9f4;
+    border-left-color: #28a745;
+}
+
+.toast-notification.success .toast-icon {
+    color: #28a745;
+}
+
+.toast-notification.danger {
+    background: #fff5f5;
+    border-left-color: #dc3545;
+}
+
+.toast-notification.danger .toast-icon {
+    color: #dc3545;
+}
+
+.toast-notification.info {
+    background: #f0f8ff;
+    border-left-color: #17a2b8;
+}
+
+.toast-notification.info .toast-icon {
+    color: #17a2b8;
+}
+
+.toast-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.toast-content {
+    flex-grow: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.toast-notification.success .toast-title {
+    color: #155724;
+}
+
+.toast-notification.success .toast-message {
+    color: #155724;
+}
+
+.toast-notification.danger .toast-title {
+    color: #721c24;
+}
+
+.toast-notification.danger .toast-message {
+    color: #721c24;
+}
+
+.toast-notification.info .toast-title {
+    color: #0c5460;
+}
+
+.toast-notification.info .toast-message {
+    color: #0c5460;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 0;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.toast-close:hover {
+    color: #333;
+}
+
+@keyframes slideInTop {
+    from {
+        transform: translateX(-50%) translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutTop {
+    from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-50%) translateY(-30px);
+        opacity: 0;
+    }
+}
+
+.toast-notification.removing {
+    animation: slideOutTop 0.3s ease-out;
+}
+
+/* Alert style notification */
+.alert-notification {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    animation: slideInDown 0.3s ease-out;
+    max-width: 100%;
+    pointer-events: auto;
+}
+
+.alert-notification.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-notification.danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.alert-notification.info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+.alert-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alert-content {
+    flex-grow: 1;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.alert-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 0;
+    flex-shrink: 0;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.alert-close:hover {
+    opacity: 1;
+}
+
+.alert-notification.removing {
+    animation: slideOutDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+}
+
+/* Custom Modal Styles */
+.custom-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInBackdrop 0.3s ease-out;
+    backdrop-filter: blur(2px);
+}
+
+.custom-modal-backdrop.closing {
+    animation: fadeOutBackdrop 0.3s ease-out;
+}
+
+@keyframes fadeInBackdrop {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOutBackdrop {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.custom-modal-dialog {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    width: 90%;
+    max-width: 450px;
+    animation: slideInModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center;
+}
+
+.custom-modal-backdrop.closing .custom-modal-dialog {
+    animation: slideOutModal 0.3s ease-in;
+}
+
+@keyframes slideInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes slideOutModal {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+}
+
+.custom-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 40px);
+}
+
+.custom-modal-header {
+    padding: 24px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #c62828 0%, #7f0000 100%);
+    border-radius: 16px 16px 0 0;
+}
+
+.custom-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.custom-modal-body {
+    padding: 24px;
+    color: #2c3e50;
+    font-size: 16px;
+    line-height: 1.6;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 220px);
+}
+
+.custom-modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background: #f8f9fa;
+    border-radius: 0 0 16px 16px;
+}
+
+.custom-modal-footer .btn {
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-modal-footer .btn-secondary {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.custom-modal-footer .btn-secondary:hover {
+    background: #dee2e6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.custom-modal-footer .btn-danger {
+    background: linear-gradient(135deg, #c62828 0%, #7f0000 100%);
+    color: white;
+}
+
+.custom-modal-footer .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(198, 40, 40, 0.4);
+}
+
+.custom-modal-footer .btn-danger:active {
+    transform: translateY(0);
+}
+</style>
+
+<script>
+// Display flash message dari session jika ada
+document.addEventListener('DOMContentLoaded', function() {
+    <?php
+    if (isset($_SESSION['flash'])) {
+        $flash = $_SESSION['flash'];
+        $type = $flash['type'] ?? 'info';
+        $message = $flash['message'] ?? '';
+        $title = $flash['title'] ?? ucfirst($type);
+        echo "showToast('" . addslashes($message) . "', '$type', 3000, '" . addslashes($title) . "');";
+        unset($_SESSION['flash']);
+    }
+    ?>
+});
+
+function showToast(message, type = 'success', duration = 3000, title = null) {
+    const container = document.getElementById('toast-container');
+    
+    const icons = {
+        'success': 'fas fa-check-circle',
+        'danger': 'fas fa-exclamation-circle',
+        'info': 'fas fa-info-circle'
+    };
+    
+    const titles = {
+        'success': 'Berhasil',
+        'danger': 'Gagal',
+        'info': 'Informasi'
+    };
+    
+    const toastTitle = title || titles[type] || 'Notifikasi';
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.innerHTML = `
+        <i class="${icons[type]} toast-icon"></i>
+        <div class="toast-content">
+            <div class="toast-title">${toastTitle}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="removeToast(this.closest('.toast-notification'))">&times;</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            removeToast(toast);
+        }, duration);
+    }
+}
+
+function removeToast(element) {
+    element.classList.add('removing');
+    setTimeout(() => {
+        element.remove();
+    }, 300);
+}
+
+function showAlert(message, type = 'success', duration = 3000) {
+    const container = document.getElementById('alert-container');
+    
+    const icons = {
+        'success': 'fas fa-check-circle',
+        'danger': 'fas fa-exclamation-circle',
+        'info': 'fas fa-info-circle'
+    };
+    
+    const alert = document.createElement('div');
+    alert.className = `alert-notification ${type}`;
+    alert.innerHTML = `
+        <i class="${icons[type]} alert-icon"></i>
+        <div class="alert-content">${message}</div>
+        <button class="alert-close" onclick="removeAlert(this.closest('.alert-notification'))">&times;</button>
+    `;
+    
+    container.appendChild(alert);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            removeAlert(alert);
+        }, duration);
+    }
+}
+
+function removeAlert(element) {
+    element.classList.add('removing');
+    setTimeout(() => {
+        element.remove();
+    }, 300);
+}
+
+function deleteItem(id, action, table, clickEvent) {
+    // Get the row from the clicked button
+    let row = null;
+    if (clickEvent && clickEvent.target) {
+        row = clickEvent.target.closest('button')?.closest('tr') || 
+              clickEvent.currentTarget?.closest('tr');
+    }
+    
+    if (!row) {
+        // Fallback: search for row that contains a button with onclick mentioning this id
+        const buttons = document.querySelectorAll(`button[onclick*="${id}"]`);
+        if (buttons.length > 0) {
+            row = buttons[0].closest('tr');
+        }
+    }
+    
+    let itemName = '';
+    
+    if (row) {
+        let targetColumn = 1; // Default: second column
+        
+        // Determine which column to extract based on table type
+        if (table === 'stok') {
+            // For stok: get first column (ID Stok)
+            targetColumn = 0;
+        } else if (table === 'kegiatan') {
+            // For kegiatan: get first column (Nama Kegiatan)
+            targetColumn = 0;
+        } else if (table === 'transaksi') {
+            // For transaksi: get second column (Pendonor name)
+            targetColumn = 1;
+        } else if (table === 'pendonor') {
+            // For pendonor: get second column (Name)
+            targetColumn = 1;
+        } else if (table === 'rumah_sakit') {
+            // For rumah_sakit: get second column (Name)
+            targetColumn = 1;
+        } else if (table === 'distribusi') {
+            // For distribusi: get second column
+            targetColumn = 1;
+        }
+        
+        const nameTd = row.querySelector(`td:nth-child(${targetColumn + 1})`);
+        if (nameTd) {
+            itemName = nameTd.textContent.trim().split('\n')[0]; // Get first line only
+        }
+    }
+    
+    // Use custom modal dialog instead of browser confirm for better UX
+    let confirmMsg = 'Apakah Anda yakin ingin menghapus data ini?';
+    if (itemName) {
+        confirmMsg = `Apakah Anda yakin ingin menghapus "${itemName}"?`;
+    }
+    
+    // Show custom confirmation dialog
+    showCustomConfirm(confirmMsg, () => {
+        // Callback when confirmed
+        performDelete(id, action, row);
+    });
+}
+
+function showCustomConfirm(message, onConfirm) {
+    // Create modal overlay
+    const backdrop = document.createElement('div');
+    backdrop.className = 'custom-modal-backdrop';
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal-dialog';
+    modal.innerHTML = `
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h5 class="custom-modal-title">Konfirmasi Penghapusan</h5>
+            </div>
+            <div class="custom-modal-body">
+                ${message}
+            </div>
+            <div class="custom-modal-footer">
+                <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger btn-lg" data-confirm="true">Hapus</button>
+            </div>
+        </div>
+    `;
+    
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+    
+    // Handle button clicks
+    const cancelBtn = modal.querySelector('[data-dismiss="modal"]');
+    const confirmBtn = modal.querySelector('[data-confirm="true"]');
+    
+    const closeModal = () => {
+        backdrop.classList.add('closing');
+        setTimeout(() => {
+            backdrop.remove();
+        }, 300);
+    };
+    
+    cancelBtn.addEventListener('click', closeModal);
+    confirmBtn.addEventListener('click', () => {
+        closeModal();
+        onConfirm();
+    });
+    
+    // Close on backdrop click
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+            closeModal();
+        }
+    });
+}
+
+function performDelete(id, action, row) {
+    if (!row) {
+        row = document.querySelector(`tr:has(button[onclick*="${id}"])`);
+    }
+    
+    fetch('api_delete.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id: id,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove row immediately with smooth animation
+            if (row) {
+                row.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out';
+                row.style.opacity = '0';
+                row.style.height = '0';
+                row.style.overflow = 'hidden';
+                row.style.paddingTop = '0';
+                row.style.paddingBottom = '0';
+                
+                setTimeout(() => {
+                    row.remove();
+                }, 300);
+            }
+            
+            // Show success notification
+            showAlert('Data berhasil dipindahkan ke tong sampah', 'success', 3000);
+        } else {
+            let errorMessage = data.message || 'Gagal menghapus data';
+            showAlert(errorMessage, 'danger', 5000);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Terjadi kesalahan saat menghapus data', 'danger', 5000);
+    });
+}
+
+</script>

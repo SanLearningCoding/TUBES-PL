@@ -1,5 +1,6 @@
 <?php
 
+// Controllers/LaporanController.php
 
 require_once 'Config/Database.php';
 require_once 'Model/TransaksiModel.php';
@@ -15,7 +16,7 @@ class LaporanController {
         $this->transaksiModel = new TransaksiModel();
         $this->stokModel = new StokModel();
         $this->distribusiModel = new DistribusiModel();
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) session_start();
     }
 
     public function viewKinerjaDonor() {

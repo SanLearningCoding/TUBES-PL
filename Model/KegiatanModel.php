@@ -1,4 +1,8 @@
 <?php
+require_once __DIR__ . '/QueryBuilder.php';
+
+// file baru
+// Model/KegiatanModel.php
 
 class KegiatanModel {
     protected $db;
@@ -21,7 +25,8 @@ class KegiatanModel {
 
     public function getKegiatanById($id_kegiatan) {
         $builder = new QueryBuilder($this->db, 'kegiatan_donasi');
-        return $builder->where('id_kegiatan', $id_kegiatan)
+        return $builder->get()
+                      ->where('id_kegiatan', $id_kegiatan)
                       ->getRowArray();
     }
 }

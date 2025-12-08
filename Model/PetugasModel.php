@@ -1,5 +1,7 @@
 <?php
+require_once __DIR__ . '/QueryBuilder.php';
 
+// Model/PetugasModel.php
 
 class PetugasModel {
     protected $db;
@@ -38,14 +40,15 @@ class PetugasModel {
 
     public function getPetugasById($id_petugas) {
         $builder = new QueryBuilder($this->db, 'petugas');
-        return $builder->where('id_petugas', $id_petugas)
-                      ->get()
+        return $builder->get()
+                      ->where('id_petugas', $id_petugas)
                       ->getRowArray();
     }
 
     public function getPetugasByEmail($email) {
         $builder = new QueryBuilder($this->db, 'petugas');
-        $result = $builder->where('email', $email)
+        $result = $builder->get()
+                        ->where('email', $email)
                         ->getRowArray();
 
         return $result;

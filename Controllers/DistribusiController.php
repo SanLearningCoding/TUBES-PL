@@ -1,5 +1,6 @@
 <?php
 
+// Controllers/DistribusiController.php
 
 require_once 'Config/Database.php';
 require_once 'Model/DistribusiModel.php';
@@ -12,7 +13,7 @@ class DistribusiController {
     public function __construct() {
         $this->distribusiModel = new DistribusiModel();
         $this->stokModel = new StokModel();
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) session_start();
     }
 
     public function index() {
@@ -24,30 +25,55 @@ class DistribusiController {
 
     public function storeDistribusi() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $data = [
-                'id_stok' => $_POST['id_stok'],
-                'id_rs' => $_POST['id_rs'],
-                'id_petugas' => $_SESSION['id_petugas'],
-                'tanggal_distribusi' => $_POST['tanggal_distribusi'],
-                'status_pengiriman' => $_POST['status_pengiriman']
-            ];
-
-            $id_distribusi = $this->distribusiModel->createDistribusi($data, $data['id_stok']);
-            if ($id_distribusi) {
-                $_SESSION['success'] = 'Distribusi darah berhasil dicatat';
+            $id_stok = $_POST['id_stok'] ?? null;
+            $id_rs = $_POST['id_rs'] ?? null;
+            $tanggal_distribusi = $_POST['tanggal_distribusi'] ?? date('Y-m-d');
+            $id_petugas = $_SESSION['id_petugas'] ?? null;
+            
+            // Validation
+            if (!$id_stok) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Pilih kantong darah', 'icon' => 'exclamation-triangle'];
+                header('Location: index.php?action=distribusi_create');
+                exit;
+            }
+            
+            if (!$id_rs) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Pilih rumah sakit tujuan', 'icon' => 'exclamation-triangle'];
+                header('Location: index.php?action=distribusi_create');
+                exit;
+            }
+            
+            // Distribute single kantong
+            $success = $this->distribusiModel->createDistribusiPerKantong($id_stok, $id_rs, $tanggal_distribusi, $id_petugas);
+            
+            if ($success) {
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Distribusi darah berhasil dicatat', 'icon' => 'check-circle'];
             } else {
-                $_SESSION['error'] = 'Gagal mencatat distribusi darah';
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal mencatat distribusi darah', 'icon' => 'exclamation-triangle'];
             }
             header('Location: index.php?action=distribusi');
             exit;
         }
     }
 
-    public function viewLacakRiwayat($id_stok) {
-        $data['stok'] = $this->stokModel->getStokById($id_stok);
-        $data['distribusi'] = $this->distribusiModel->getDistribusiByStok($id_stok);
-        $this->view('distribusi/lacak', $data);
+    public function deleteDistribusi($id) {
+    if ($this->distribusiModel->deleteDistribusi($id)) {
+        $_SESSION['flash'] = [
+            'type'    => 'danger',
+            'message' => 'Distribusi darah berhasil dipindahkan ke Arsip',
+            'icon'    => 'trash'
+        ];
+    } else {
+        $_SESSION['flash'] = [
+            'type'    => 'danger',
+            'message' => 'Gagal menghapus (mengarsipkan) distribusi',
+            'icon'    => 'exclamation-triangle'
+        ];
     }
+    header('Location: index.php?action=distribusi');
+    exit;
+}
+
 
     public function storeRumahSakit() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -58,9 +84,9 @@ class DistribusiController {
             ];
 
             if ($this->distribusiModel->createRumahSakit($data)) {
-                $_SESSION['success'] = 'Rumah sakit berhasil ditambahkan';
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Rumah sakit berhasil ditambahkan', 'icon' => 'check-circle'];
             } else {
-                $_SESSION['error'] = 'Gagal menambahkan rumah sakit';
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menambahkan rumah sakit', 'icon' => 'exclamation-triangle'];
             }
             header('Location: index.php?action=distribusi');
             exit;
@@ -69,6 +95,7 @@ class DistribusiController {
 
     private function view($view, $data = []) {
         extract($data);
-        require_once "View/distribusi/$view.php";
+        // PERBAIKAN: Pastikan path view konsisten
+        require_once "View/$view.php";
     }
 }

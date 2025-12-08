@@ -1,5 +1,7 @@
 <?php
+require_once __DIR__ . '/QueryBuilder.php';
 
+// Model/PendonorModel.php
 
 class PendonorModel {
     protected $db;
@@ -7,6 +9,13 @@ class PendonorModel {
     public function __construct() {
         $database = new Database();
         $this->db = $database->getConnection();
+    }
+
+    private function hasColumn($table, $column) {
+        $stmt = $this->db->prepare("SELECT COUNT(*) as cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+        $stmt->execute([$table, $column]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return intval($row['cnt']) > 0;
     }
 
     public function getRiwayatDonasi($id_pendonor) {
@@ -30,14 +39,29 @@ class PendonorModel {
     }
 
     public function getAllPendonor() {
-        $builder = new QueryBuilder($this->db, 'pendonor');
-        return $builder->get()->getResultArray();
+        if ($this->hasColumn('pendonor', 'id_gol_darah')) {
+            $stmt = $this->db->prepare("SELECT p.*, gd.nama_gol_darah, gd.rhesus
+                FROM pendonor p
+                LEFT JOIN golongan_darah gd ON p.id_gol_darah = gd.id_gol_darah
+                WHERE p.is_deleted = 0
+                ORDER BY p.id_pendonor DESC");
+        } else {
+            $stmt = $this->db->prepare("SELECT p.* FROM pendonor p WHERE p.is_deleted = 0 ORDER BY p.id_pendonor DESC");
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getPendonorById($id_pendonor) {
-        $builder = new QueryBuilder($this->db, 'pendonor');
-        return $builder->where('id_pendonor', $id_pendonor)
-                      ->getRowArray();
+        if ($this->hasColumn('pendonor', 'id_gol_darah')) {
+            $stmt = $this->db->prepare("SELECT p.*, gd.nama_gol_darah, gd.rhesus FROM pendonor p
+                LEFT JOIN golongan_darah gd ON p.id_gol_darah = gd.id_gol_darah
+                WHERE p.id_pendonor = ?");
+        } else {
+            $stmt = $this->db->prepare("SELECT p.* FROM pendonor p WHERE p.id_pendonor = ?");
+        }
+        $stmt->execute([$id_pendonor]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function insertPendonor($data) {

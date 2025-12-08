@@ -1,0 +1,909 @@
+/* UI enhancements for PMI theme */
+:root {
+  --pmi-red: #c62828; /* main red */
+  --pmi-red-dark: #7f0000;
+  --pmi-red-500: #b71c1c;
+  --pmi-white: #ffffff;
+  --pmi-soft-red: #fdecec;
+  --pmi-muted: #6b7280;
+  --pmi-shadow: rgba(16, 24, 40, 0.06);
+  --pmi-red-600: #b71c1c;
+  --pmi-red-soft: #ffe9e9;
+  --pmi-red-soft-2: #fff5f5;
+  --pmi-bg: #f4f5f7;
+  --pmi-surface: #ffffff;
+  --pmi-border: #e3e6ec;
+  --pmi-text-main: #111827;
+  --pmi-text-muted: #6b7280;
+  --muted: #6c757d;
+  --bg: var(--pmi-bg);
+  --card-bg: var(--pmi-surface);
+  --radius: 10px;
+}
+
+html,
+body,
+.app-ui {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  background: var(--bg);
+  min-height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* BRAND */
+.navbar-brand .brand-badge {
+  width: 42px;
+  height: 42px;
+  background: var(--pmi-red);
+  border-radius: 8px;
+  padding: 6px;
+  display: inline-flex;
+  box-shadow: 0 6px 18px rgba(198, 40, 40, 0.15);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  align-items: center;
+  justify-content: center;
+}
+.navbar-brand .brand-title {
+  font-weight: 700;
+  /* Make the brand title use the primary PMI red color (#C62828) as requested */
+  color: var(--pmi-red);
+  font-size: 1rem;
+}
+.navbar-brand .brand-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.navbar-brand:hover .brand-badge {
+  transform: translateY(-2px);
+}
+
+/* NAV */
+.navbar {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 255, 255, 0.98)
+  );
+  border-bottom: 1px solid rgba(16, 24, 40, 0.04);
+  transition: box-shadow 220ms ease, background-color 220ms ease;
+  position: relative;
+  z-index: 1050;
+  overflow: visible !important; /* Allow dropdowns to display properly */
+}
+
+/* Ensure navbar collapse and nav don't have scrollbars */
+.navbar-collapse,
+.navbar-nav {
+  overflow: visible !important;
+}
+
+/* Ensure sticky-top doesn't create scroll issues */
+.sticky-top {
+  overflow: visible !important;
+}
+.navbar .nav-link {
+  color: #333;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: all 0.18s ease;
+  font-weight: 600;
+}
+.navbar .nav-link:hover {
+  background: rgba(198, 40, 40, 0.03);
+  color: var(--pmi-red-600);
+  transform: translateY(-1px);
+}
+.navbar .nav-link.active {
+  background: var(--pmi-red-500);
+  color: var(--pmi-white);
+  box-shadow: 0 6px 18px rgba(198, 40, 40, 0.12);
+  font-weight: 700;
+}
+
+/* Offcanvas title - make sure the mobile nav heading matches the brand color */
+.offcanvas-title {
+  color: var(--pmi-red);
+}
+
+/* User pill */
+.user-pill .avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--pmi-red);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(198, 40, 40, 0.12);
+}
+.user-pill .dropdown-menu {
+  min-width: 220px;
+  border-radius: 10px;
+  position: absolute;
+  z-index: 9999 !important; /* Ensure dropdown appears above everything */
+  top: 100% !important; /* Position below the trigger */
+  right: 0 !important; /* Align to right edge */
+  margin-top: 0.5rem;
+}
+
+/* Navbar positioning to allow dropdowns to display properly */
+.navbar {
+  position: relative;
+  z-index: 1050;
+}
+
+/* Search */
+.form-control-sm {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Main content and cards */
+main,
+.main-content {
+  padding: 1.25rem 1.25rem;
+  background: transparent; /* ensure background gradient shows through */
+  min-height: auto; /* allow content to flow naturally */
+}
+.card {
+  border-radius: var(--radius);
+  box-shadow: 0 8px 22px var(--pmi-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 38px var(--pmi-shadow);
+}
+
+/* Stat card / dashboard specific */
+.stat-card {
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(255, 255, 255, 0.92)
+  );
+  padding: 1rem;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.04);
+}
+.stat-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.stat-card .label {
+  font-size: 0.9rem;
+  color: var(--pmi-muted);
+}
+.icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+/* Ensure card title/metric used inside stat-card have same size and typography
+   as the other stat tiles (label + value). This makes h5/h2 variants
+   visually consistent with label/value style used for Total Pendonor / Stok */
+.stat-card .card-title,
+.stat-card .label {
+  font-size: 0.9rem;
+  color: var(--pmi-muted);
+  font-weight: 600;
+  margin: 0;
+}
+.stat-card .card-metric,
+.stat-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.05;
+}
+.stat-card .icon-circle i.fas {
+  font-size: 1.05rem; /* slightly larger than fa-lg but smaller than fa-2x */
+}
+.icon-circle.bg-light {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.04);
+}
+
+/* Responsive tweaks */
+@media (max-width: 991px) {
+  .navbar-brand .brand-sub {
+    display: none;
+  }
+  .navbar .nav-link {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .navbar .nav-link {
+    padding: 8px 10px;
+  }
+}
+
+/* Small helpers */
+.btn-pmi {
+  background: var(--pmi-red);
+  color: var(--pmi-white);
+  border-radius: 8px;
+  border: 0;
+  font-weight: 600;
+}
+.btn-pmi-outline {
+  background: transparent;
+  color: var(--pmi-red);
+  border: 1px solid rgba(198, 40, 40, 0.12);
+  border-radius: 8px;
+}
+.btn-archive {
+  background: transparent;
+  color: var(--pmi-red);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.btn-archive .fa-archive {
+  margin-right: 6px;
+}
+.btn-pmi-outline {
+  background: transparent;
+  color: var(--pmi-red);
+  border: 1px solid rgba(198, 40, 40, 0.12);
+  border-radius: 8px;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.02);
+}
+
+/* AUTH / LOGIN */
+.auth-container {
+  min-height: calc(100vh - 60px);
+}
+.auth-wrapper {
+  /* Allow a wider auth-wrapper so the login column can be wider for long emails */
+  max-width: 1200px;
+  overflow: hidden;
+  border-radius: 14px;
+  position: relative;
+  z-index: 10;
+}
+.auth-left.bg-pmi {
+  /* Make the left panel strongly distinct from the animated page background */
+  background: var(--pmi-red-dark); /* Use the darker red defined in root */
+  color: #fff;
+  position: relative;
+  z-index: 2;
+  padding: 2.25rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-left .brand-badge {
+  background: #ffffff; /* solid white badge for strong contrast */
+  color: var(--pmi-red); /* red icon inside */
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 10px 18px rgba(16, 24, 40, 0.12);
+}
+.auth-left .brand-badge i {
+  color: var(--pmi-red);
+}
+.auth-left .brand-badge,
+.auth-card {
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.auth-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(16, 24, 40, 0.12);
+}
+.auth-left h2,
+.auth-left p,
+.auth-left .lead {
+  color: #fff;
+}
+
+/* Welcome title and description for left panel */
+.auth-left .welcome-title {
+  font-size: 2rem;
+  line-height: 1.05;
+  margin: 0.25rem 0 0.5rem 0;
+}
+.auth-left .welcome-desc {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+.auth-left .brand-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+/* Subtle overlay card to separate brand copy from the red background
+   Ensures non-intrusive contrast while keeping text readable. */
+
+/* Stronger overlay variation for poor-contrast cases */
+.auth-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-card.card {
+  /* Allow auth card to grow to the full column width; column width is controlled by .auth-wrapper's grid */
+  max-width: none;
+  width: 100%;
+}
+
+/* Right-panel form title */
+.auth-right .card-title {
+  font-weight: 700;
+  color: var(--pmi-text-main);
+}
+.auth-card .form-control {
+  padding: 1.15rem 1rem;
+  /* Form controls should not overflow their flex parents and should
+     present their own horizontal scroll if a very long value is typed */
+  min-width: 0; /* allow flex children to shrink properly */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto; /* ensure long values are scrollable */
+}
+
+/* Reduce font-size for auth inputs to avoid overly large typed text */
+.auth-card .form-control,
+.auth-card .form-control.form-control-lg {
+  font-size: 0.95rem; /* slightly smaller than system default for compact look */
+}
+
+/* Ensure input placeholder matches the font-size for consistency */
+.auth-card .form-control::placeholder {
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+/* Force input content to LTR for consistency when entering email addresses */
+.auth-card input[type="email"],
+.auth-card input[type="text"],
+.auth-card input[type="password"] {
+  direction: ltr;
+}
+.password-toggle {
+  border: 0;
+  border-radius: 8px;
+}
+.auth-card .position-relative .form-control {
+  padding-right: 3.5rem;
+}
+.auth-card .password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  z-index: 2;
+}
+.auth-card .btn-pmi {
+  background: var(--pmi-red);
+}
+.auth-card .btn-pmi:hover {
+  background: var(--pmi-red-dark);
+}
+
+/* Tables: modern clean look */
+.table thead th {
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+  color: var(--pmi-text-main);
+}
+.table tbody tr:hover {
+  background: rgba(198, 40, 40, 0.03);
+}
+
+/* Ensure striped rows fill the entire row, including the action column.
+   Some browsers or frameworks add row striping only to visible td, so make
+   sure striped background explicitly styles all td in the row and the
+   action column (no-wrap-actions). */
+.table.table-striped tbody tr:nth-of-type(odd) td {
+  background-color: #ececec; /* consistent striping color */
+}
+.table.table-striped tbody tr:nth-of-type(odd) td.no-wrap-actions {
+  background-color: #ececec;
+}
+
+/* Force the cells to show background even when buttons or controls inside
+   have their own background, by ensuring the table cell paints under the control */
+.table.table-striped tbody td {
+  background-clip: padding-box; /* prevent child backgrounds from hiding row color */
+}
+
+/* Buttons & small helpers */
+.btn-outline-primary,
+.btn-outline-danger {
+  transition: all 160ms ease;
+}
+.btn-outline-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Mobile nav offcanvas improvements */
+.offcanvas {
+  border-radius: 12px;
+}
+.offcanvas-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.auth-card .btn-pmi:active {
+  transform: translateY(1px);
+}
+.auth-card {
+  animation: fadeInUp 360ms ease both;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Table tweaks */
+.table thead th {
+  background: #fff;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+  font-weight: 700;
+  color: var(--pmi-text-main);
+}
+/* Rumah sakit table styles */
+.table td.rs-address {
+  max-width: 360px;
+  white-space: normal;
+  word-break: break-word;
+}
+.table td.no-wrap-actions {
+  white-space: nowrap;
+  padding: 0.5rem 0.25rem !important;
+}
+.table td.no-wrap-actions .btn {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  margin: 0 2px;
+}
+/* Ensure table-dark headers also have readable text color */
+.table thead.table-dark th {
+  color: var(--pmi-text-main);
+}
+.table.table-dark thead th,
+.table-dark thead th {
+  color: var(--pmi-text-main) !important;
+}
+.table thead th a {
+  color: inherit; /* don't force links in headers to other color */
+  text-decoration: none;
+}
+.table tbody tr:hover {
+  background: rgba(198, 40, 40, 0.03);
+}
+
+/* Ensure table body cells are readable (dark text) */
+.table tbody td,
+.table tbody th {
+  color: var(--pmi-text-main) !important;
+}
+
+/* Ensure .table-dark headers and body enforce readable background and text */
+.table.table-dark thead th,
+.table-dark thead th,
+.table.table-dark tbody td,
+.table-dark tbody td {
+  color: var(--pmi-text-main) !important;
+  background: #fff !important;
+}
+
+/* Utility to keep consistent spacing */
+.container-fluid.main {
+  padding: 1rem 2rem;
+}
+
+/* Animated gradient background for auth pages and post-login pages */
+.auth-bg,
+.app-ui {
+  background: (#fefefe 0%);
+  background-size: 400% 400%;
+  animation: gradientBG 14s ease infinite;
+  background-attachment: fixed; /* fix gradient to viewport */
+  min-height: 100vh;
+  position: relative;
+}
+.auth-bg::before,
+.app-ui::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+      circle at 15% 25%,
+      rgba(198, 40, 40, 0.055),
+      transparent 10%
+    ),
+    radial-gradient(circle at 85% 80%, rgba(179, 0, 0, 0.045), transparent 12%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: floatBlobs 10s linear infinite;
+}
+.auth-bg .auth-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* Keep layout containers transparent so the gradient background shows through to the bottom */
+.container,
+.container-fluid,
+.row,
+.col-12,
+.col-md-10,
+.col-lg-6 {
+  background: transparent !important;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+@keyframes floatBlobs {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.98;
+  }
+  50% {
+    transform: translate3d(-6px, -8px, 0);
+    opacity: 0.96;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.98;
+  }
+}
+
+Auth card improvements .auth-card.card {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 12px;
+}
+.auth-card .card-body {
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+}
+.auth-card .btn-pmi {
+  box-shadow: 0 8px 20px rgba(198, 40, 40, 0.12);
+}
+.auth-left .brand-badge {
+  box-shadow: 0 12px 36px rgba(198, 40, 40, 0.18);
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .auth-bg,
+  .app-ui {
+    animation: none !important;
+  }
+  .auth-bg::before,
+  .app-ui::before {
+    animation: none !important;
+  }
+  .auth-card {
+    animation: none !important;
+  }
+}
+
+/* Responsive table actions for mobile devices */
+@media (max-width: 768px) {
+  .table td.no-wrap-actions {
+    padding: 0.5rem 0.25rem !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .table td.no-wrap-actions .btn {
+    flex: 1;
+    min-width: 36px;
+    padding: 0.375rem 0.25rem;
+    font-size: 0.75rem;
+    margin: 0;
+  }
+
+  .table td.no-wrap-actions .btn i {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .table td.no-wrap-actions {
+    padding: 0.375rem 0.125rem !important;
+  }
+
+  .table td.no-wrap-actions .btn {
+    padding: 0.25rem 0.375rem;
+    min-width: 32px;
+  }
+}
+
+/* Ensure proper spacing and prevent content cutoff */
+.container-fluid {
+  padding-bottom: 1rem;
+}
+
+.card {
+  margin-bottom: 1.5rem;
+}
+
+body,
+html {
+  overflow-x: hidden;
+}
+
+/* Responsive card spacing */
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  .row > .col-md-6 {
+    margin-bottom: 1rem;
+  }
+
+  .card-body table th {
+    width: auto !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .container-fluid {
+    padding: 0.5rem;
+    padding-bottom: 3rem;
+  }
+
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  .card-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .card-body table {
+    font-size: 0.875rem;
+  }
+
+  .card-body table th {
+    font-weight: 600;
+    word-break: break-word;
+  }
+}
+
+/* Global Responsive Fixes for All Pages */
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.main-content {
+  width: 100%;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+
+.row {
+  width: 100%;
+}
+
+[class*="col-"] {
+  width: 100%;
+  padding: 0.5rem;
+  overflow-x: hidden;
+  word-break: break-word;
+}
+
+@media (min-width: 576px) {
+  [class*="col-"] {
+    padding: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  [class*="col-"] {
+    padding: 1rem;
+  }
+}
+
+/* Ensure tables are responsive */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  table-layout: auto;
+}
+
+table th,
+table td {
+  word-break: break-word;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+@media (min-width: 576px) {
+  table th,
+  table td {
+    padding: 0.75rem;
+  }
+}
+
+/* Ensure forms don't overflow */
+.form-control,
+.form-select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Button responsive */
+.btn {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-group,
+.btn-toolbar {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 576px) {
+  .btn-group .btn,
+  .btn-toolbar .btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
+
+/* Container responsive */
+.container,
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (max-width: 576px) {
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Card responsive */
+.card {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Badge responsive */
+.badge {
+  display: inline-block;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Icon-only buttons */
+.btn-icon {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+  font-size: 18px !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid transparent !important;
+}
+
+.btn-icon:hover {
+  transform: scale(1.1) !important;
+}
+
+.btn-icon.btn-danger {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border: 1px solid #dc3545 !important;
+}
+
+.btn-icon.btn-danger:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
+}
+
+.btn-icon.btn-success {
+  background-color: #28a745 !important;
+  color: white !important;
+  border: 1px solid #28a745 !important;
+}
+
+.btn-icon.btn-success:hover {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+}
+
+/* Icon-only buttons without background - gray color */
+.btn-icon-only {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  color: #6c757d !important;
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+}
+
+.btn-icon-only:hover {
+  color: #495057 !important;
+  transform: scale(1.15) !important;
+}
+
+.btn-icon-only:active {
+  transform: scale(0.95) !important;
+}
+
+/* Red icon buttons (for trash) */
+.btn-icon-only[style*="color: #B71C1C"]:hover {
+  color: #8b1414 !important;
+}
+
+/* FontAwesome icons in icon-only buttons */
+.btn-icon-only .fa-trash {
+  font-size: 18px !important;
+}
+
+/* Material Symbols styling */
+.material-symbols-outlined {
+  font-size: 20px !important;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+}

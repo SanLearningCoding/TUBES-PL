@@ -1,5 +1,7 @@
 <?php
 
+// Controllers/PetugasController.php
+
 require_once 'Config/Database.php';
 require_once 'Model/PetugasModel.php';
 
@@ -8,7 +10,7 @@ class PetugasController {
 
     public function __construct() {
         $this->petugasModel = new PetugasModel();
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) session_start();
     }
 
     public function index() {
@@ -28,18 +30,19 @@ class PetugasController {
             $data = [
                 'nama_petugas' => $_POST['nama_petugas'],
                 'email' => $_POST['email'],
-                'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
-                'no_telepon' => $_POST['no_telepon'],
-                'status' => 'aktif'
+                'password_hash' => password_hash($_POST['password'], PASSWORD_BCRYPT),
+                'kontak' => $_POST['kontak'] ?? '',
+                'is_deleted' => 0
             ];
 
             if ($this->petugasModel->insertPetugas($data)) {
-                $_SESSION['success'] = 'Petugas berhasil ditambahkan';
-                header('Location: index.php?action=petugas');
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Petugas berhasil ditambahkan', 'icon' => 'check-circle'];
+                // staff management is disabled; redirect to dashboard
+                header('Location: index.php?action=dashboard');
                 exit;
             } else {
-                $_SESSION['error'] = 'Gagal menambahkan petugas';
-                header('Location: index.php?action=petugas&method=create');
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menambahkan petugas', 'icon' => 'exclamation-triangle'];
+                header('Location: index.php?action=dashboard');
                 exit;
             }
         }
@@ -47,10 +50,12 @@ class PetugasController {
 
     public function edit($id_petugas) {
         $this->checkAuth();
+        // Only allow editing of the current logged in user's profile
+        $id_petugas = $_SESSION['id_petugas'];
         $data['petugas'] = $this->petugasModel->getPetugasById($id_petugas);
-        if (!$data['petugas']) {
-            $_SESSION['error'] = 'Petugas tidak ditemukan';
-            header('Location: index.php?action=petugas');
+            if (!$data['petugas']) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Petugas tidak ditemukan', 'icon' => 'exclamation-triangle'];
+            header('Location: index.php?action=dashboard');
             exit;
         }
         $this->view('edit', $data);
@@ -59,22 +64,36 @@ class PetugasController {
     public function update($id_petugas) {
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            // Restrict updates to current logged-in user only
+            $id_petugas = $_SESSION['id_petugas'];
             $data = [
-                'nama_petugas' => $_POST['nama_petugas'],
-                'email' => $_POST['email'],
-                'no_telepon' => $_POST['no_telepon']
+                'nama_petugas' => trim($_POST['nama_petugas'] ?? ''),
+                'email' => trim($_POST['email'] ?? ''),
+                'kontak' => trim($_POST['kontak'] ?? '')
             ];
 
             if (!empty($_POST['password'])) {
-                $data['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                $data['password_hash'] = password_hash($_POST['password'], PASSWORD_BCRYPT);
+            }
+
+            // Validate unique email (prevent updating email to one used by another account)
+            $existing = $this->petugasModel->getPetugasByEmail($data['email']);
+            if ($existing && intval($existing['id_petugas']) !== intval($id_petugas)) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Email sudah digunakan oleh akun lain', 'icon' => 'exclamation-triangle'];
+                header('Location: index.php?action=petugas_edit&id=' . $id_petugas);
+                exit;
             }
 
             if ($this->petugasModel->updatePetugas($id_petugas, $data)) {
-                $_SESSION['success'] = 'Petugas berhasil diupdate';
+                // Update session values so displayed name/email/kontak remain current
+                if (isset($data['nama_petugas'])) $_SESSION['nama_petugas'] = $data['nama_petugas'];
+                if (isset($data['email'])) $_SESSION['email'] = $data['email'];
+                if (isset($data['kontak'])) $_SESSION['kontak'] = $data['kontak'];
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Profil berhasil diupdate', 'icon' => 'check-circle'];
             } else {
-                $_SESSION['error'] = 'Gagal mengupdate petugas';
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal mengupdate petugas', 'icon' => 'exclamation-triangle'];
             }
-            header('Location: index.php?action=petugas');
+            header('Location: index.php?action=petugas_profile');
             exit;
         }
     }
@@ -82,26 +101,27 @@ class PetugasController {
     public function delete($id_petugas) {
         $this->checkAuth();
         if ($this->petugasModel->SoftDeletePetugas($id_petugas)) {
-            $_SESSION['success'] = 'Petugas berhasil dinonaktifkan';
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Petugas berhasil dinonaktifkan', 'icon' => 'trash'];
         } else {
-            $_SESSION['error'] = 'Gagal menonaktifkan petugas';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menonaktifkan petugas', 'icon' => 'exclamation-triangle'];
         }
-        header('Location: index.php?action=petugas');
+        header('Location: index.php?action=dashboard');
         exit;
     }
 
     public function updateStatus($id_petugas) {
         $this->checkAuth();
         if ($this->petugasModel->restorePetugas($id_petugas)) {
-            $_SESSION['success'] = 'Status petugas berhasil diaktifkan';
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Status petugas berhasil diaktifkan', 'icon' => 'check-circle'];
         } else {
-            $_SESSION['error'] = 'Gagal mengaktifkan petugas';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal mengaktifkan petugas', 'icon' => 'exclamation-triangle'];
         }
-        header('Location: index.php?action=petugas');
+        header('Location: index.php?action=dashboard');
         exit;
     }
 
     public function login() {
+        // Jika sudah login, redirect ke dashboard
         if (isset($_SESSION['isLoggedIn'])) {
             header('Location: index.php?action=dashboard');
             exit;
@@ -111,39 +131,48 @@ class PetugasController {
 
     public function authenticate() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $email = $_POST['email'];
-            $password = $_POST['password'];
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
 
-            $petugas = $this->petugasModel->getPetugasByEmail($email);
+            // Get database connection
+            $database = new Database();
+            $db = $database->getConnection();
+
+            // Direct SQL query instead of using QueryBuilder
+            $stmt = $db->prepare("SELECT id_petugas, nama_petugas, email, password_hash, is_deleted FROM petugas WHERE email = ? LIMIT 1");
+            $stmt->execute([$email]);
+            $petugas = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($petugas) {
-                if (password_verify($password, $petugas['password'])) {
-                    if ($petugas['status'] == 'nonaktif') {
-                        $_SESSION['error'] = 'Akun dinonaktifkan';
-                        header('Location: index.php?action=login');
-                        exit;
-                    }
+                // Check if account is soft-deleted
+                if ($petugas['is_deleted'] == 1) {
+                    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Akun dinonaktifkan', 'icon' => 'exclamation-triangle'];
+                    header('Location: index.php?action=login');
+                    exit;
+                }
 
+                // Verify password
+                if (password_verify($password, $petugas['password_hash'])) {
                     $_SESSION['id_petugas'] = $petugas['id_petugas'];
                     $_SESSION['nama_petugas'] = $petugas['nama_petugas'];
                     $_SESSION['email'] = $petugas['email'];
                     $_SESSION['isLoggedIn'] = true;
 
-                    $_SESSION['success'] = 'Login berhasil';
                     header('Location: index.php?action=dashboard');
                     exit;
                 } else {
-                    $_SESSION['error'] = 'Email atau password salah';
+                    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Email atau password salah', 'icon' => 'exclamation-triangle'];
                     header('Location: index.php?action=login');
                     exit;
                 }
             } else {
-                $_SESSION['error'] = 'Email tidak ditemukan';
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Email tidak ditemukan', 'icon' => 'exclamation-triangle'];
                 header('Location: index.php?action=login');
                 exit;
             }
         }
     
+        // Jika bukan POST request, redirect ke login
         header('Location: index.php?action=login');
         exit;
     }
@@ -160,9 +189,10 @@ class PetugasController {
         $this->view('profile', $data);
     }
 
+    // Method helper untuk check authentication
     private function checkAuth() {
         if (!isset($_SESSION['isLoggedIn'])) {
-            $_SESSION['error'] = 'Anda harus login terlebih dahulu';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda harus login terlebih dahulu', 'icon' => 'exclamation-triangle'];
             header('Location: index.php?action=login');
             exit;
         }
@@ -171,6 +201,7 @@ class PetugasController {
     private function view($view, $data = []) {
         extract($data);
         
+        // Cek beberapa kemungkinan path view
         $possiblePaths = [
             "View/petugas/$view.php"
         ];
@@ -181,7 +212,8 @@ class PetugasController {
                 return;
             }
         }
-
+        
+        // Jika view tidak ditemukan
         die("View tidak ditemukan: $view. Path yang dicari: " . implode(', ', $possiblePaths));
     }
 }
