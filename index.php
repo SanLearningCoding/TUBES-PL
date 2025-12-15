@@ -290,11 +290,43 @@ switch ($action) {
         $alamat = trim($_POST['alamat'] ?? ''); // Tetap trim, tapi bisa string kosong
         $no_hp_raw = $_POST['no_hp'] ?? ''; // Ambil nilai mentah
         $riwayat_penyakit = trim($_POST['riwayat_penyakit'] ?? '');
+        $other_illness = trim($_POST['other_illness'] ?? '');
         $id_gol_darah = $_POST['id_gol_darah'] ?? null;
-        $is_layak = isset($_POST['is_layak']) ? 1 : 0; // Checkbox
 
         // Proses no_hp: hanya simpan angka
         $no_hp = preg_replace('/\D+/', '', $no_hp_raw);
+
+        // DETERMINE HEALTH STATUS (is_layak) based on business rules:
+        // - is_layak = 0 (TIDAK LAYAK/Merah): if ANY screening disease checkbox is checked
+        // - is_layak = 1 (LAYAK/Kuning): if NO screening diseases but other_illness is filled
+        // - is_layak = 2 (SEHAT/Hijau): if NO screening diseases AND NO other_illness
+        
+        $screening_diseases = [
+            'has_hepatitis_b', 'has_hepatitis_c', 'has_aids', 'has_hemofilia',
+            'has_sickle_cell', 'has_thalassemia', 'has_leukemia', 'has_lymphoma',
+            'has_myeloma', 'has_cjd'
+        ];
+        
+        // Check if any screening disease checkbox is checked
+        $has_screening_disease = false;
+        foreach ($screening_diseases as $disease_field) {
+            if (isset($_POST[$disease_field]) && $_POST[$disease_field] == 1) {
+                $has_screening_disease = true;
+                break;
+            }
+        }
+        
+        // Determine is_layak status based on screening diseases and other_illness
+        if ($has_screening_disease) {
+            // Priority 1: If any screening disease is checked → TIDAK LAYAK (merah)
+            $is_layak = 0;
+        } elseif (!empty($other_illness)) {
+            // Priority 2: If no screening disease but other_illness is filled → LAYAK (kuning)
+            $is_layak = 1;
+        } else {
+            // Priority 3: If no screening disease AND no other_illness → SEHAT (hijau)
+            $is_layak = 2;
+        }
 
         error_log("pendonor_store: Data POST diterima. no_hp_raw='$no_hp_raw', no_hp='$no_hp'");
 
@@ -1201,33 +1233,30 @@ switch ($action) {
             }
 
             // --- OPSIONAL: Sinkronisasi Stok Darah ---
-            // Jika status distribusi berubah, Anda mungkin perlu mengupdate status stok darah di tabel `stok_darah`.
-            // Logikanya tergantung pada aturan bisnis Anda.
-            // Contoh: Jika status berubah dari 'dikirim' ke 'dibatalkan', kembalikan status stok ke 'tersedia'.
-            // Jika status berubah dari 'dibatalkan' ke 'dikirim', ubah status stok ke 'didistribusikan' atau 'terkirim'.
-            // Jika status berubah dari 'dikirim' ke 'diterima', status stok mungkin tetap 'terkirim' atau menjadi 'digunakan' tergantung kebijakan.
-
-            $old_status_stok = null;
-            $new_status_stok = null;
-
-            if ($old_status === 'dikirim' && $status === 'dibatalkan') {
-                $old_status_stok = 'didistribusikan'; // Atau status lain yang sesuai dengan 'dikirim'
-                $new_status_stok = 'tersedia';
-            } elseif ($old_status === 'dibatalkan' && $status === 'dikirim') {
-                $old_status_stok = 'tersedia';
-                $new_status_stok = 'didistribusikan'; // Atau status lain yang sesuai
-            } elseif ($old_status === 'dikirim' && $status === 'diterima') {
-                $old_status_stok = 'didistribusikan';
-                $new_status_stok = 'diterima'; // Atau 'digunakan' tergantung kebijakan
-            }
-            // Tambahkan kondisi lain sesuai kebutuhan
-
-            if ($old_status_stok && $new_status_stok) {
-                $stmt_sync_stok = $db->prepare("UPDATE stok_darah SET status = ? WHERE id_stok = ? AND status = ?");
-                $stmt_sync_stok->execute([$new_status_stok, $old_id_stok, $old_status_stok]);
-                // Catat jumlah baris yang diupdate jika perlu untuk logging/debugging
-                $rows_affected = $stmt_sync_stok->rowCount();
-                error_log("SyncStokDistribusi: ID Stok $old_id_stok, dari '$old_status_stok' ke '$new_status_stok', baris terpengaruh: $rows_affected");
+            // --- SINKRONISASI STOK DARAH BERDASARKAN STATUS DISTRIBUSI ---
+            // Business rule untuk sinkronisasi status stok:
+            // - Jika status distribusi = 'dikirim' atau 'diterima' → status stok = 'terpakai'
+            // - Jika status distribusi = 'dibatalkan' → status stok = 'tersedia'
+            
+            if ($old_status !== $status) {
+                // Status distribusi berubah, sinkronisasi dengan status stok
+                $new_status_stok = null;
+                
+                if ($status === 'dibatalkan') {
+                    // Jika dibatalkan, kembalikan stok ke 'tersedia'
+                    $new_status_stok = 'tersedia';
+                } elseif ($status === 'dikirim' || $status === 'diterima') {
+                    // Jika dikirim atau diterima, ubah stok menjadi 'terpakai'
+                    $new_status_stok = 'terpakai';
+                }
+                
+                if ($new_status_stok) {
+                    // Update status stok darah
+                    $stmt_sync_stok = $db->prepare("UPDATE stok_darah SET status = ? WHERE id_stok = ? AND is_deleted = 0");
+                    $stmt_sync_stok->execute([$new_status_stok, $old_id_stok]);
+                    $rows_affected = $stmt_sync_stok->rowCount();
+                    error_log("SyncStokDistribusi: ID Stok $old_id_stok, status distribusi berubah dari '$old_status' ke '$status', status stok diubah ke '$new_status_stok', baris terpengaruh: $rows_affected");
+                }
             }
 
             $db->commit();

@@ -58,12 +58,12 @@ $stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
 <div class="row">
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header" style="background: #c62828; color: white;">
                 <h5 class="card-title mb-0"><i class="fas fa-hospital me-2"></i>Informasi Rumah Sakit</h5>
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    <i class="fas fa-hospital fa-4x text-primary"></i>
+                    <i class="fas fa-hospital fa-4x" style="color: #c62828;"></i>
                     <h4 class="mt-3"><?= htmlspecialchars($rs['nama_rs']) ?></h4>
                 </div>
                 
@@ -85,36 +85,37 @@ $stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
         </div>
         
         <div class="card mt-3">
-            <div class="card-header bg-info text-white">
+            <div class="card-header" style="background: #c62828; color: white;">
                 <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Statistik Distribusi</h5>
             </div>
             <div class="card-body">
-                <div class="text-center">
-                    <h3 class="text-primary"><?= $stats['total_distribusi'] ?? 0 ?></h3>
-                    <p class="text-muted">Total Distribusi</p>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-4 text-center">
-                        <h5 class="text-success"><?= $stats['total_terkirim'] ?? 0 ?></h5>
-                        <small class="text-muted">Terkirim</small>
-                    </div>
-                    <div class="col-4 text-center">
-                        <h5 class="text-warning"><?= $stats['total_dalam_perjalanan'] ?? 0 ?></h5>
-                        <small class="text-muted">Dalam Perjalanan</small>
-                    </div>
-                    <div class="col-4 text-center">
-                        <h5 class="text-secondary"><?= $stats['total_menunggu'] ?? 0 ?></h5>
-                        <small class="text-muted">Menunggu</small>
-                    </div>
-                </div>
+                <table class="table table-borderless mb-0">
+                    <tbody>
+                        <tr>
+                            <th style="width:55%;">Total Distribusi</th>
+                            <td style="color: #c62828; font-weight:700;"><?= $stats['total_distribusi'] ?? 0 ?></td>
+                        </tr>
+                        <tr>
+                            <th>Terkirim</th>
+                            <td style="color: #c62828;"><?= $stats['total_terkirim'] ?? 0 ?></td>
+                        </tr>
+                        <tr>
+                            <th>Dalam Perjalanan</th>
+                            <td style="color: #c62828;"><?= $stats['total_dalam_perjalanan'] ?? 0 ?></td>
+                        </tr>
+                        <tr>
+                            <th>Menunggu</th>
+                            <td style="color: #6b7280;"><?= $stats['total_menunggu'] ?? 0 ?></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
     
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header bg-success text-white">
+            <div class="card-header" style="background: #c62828; color: white;">
                 <h5 class="card-title mb-0"><i class="fas fa-history me-2"></i>Riwayat Distribusi Terbaru</h5>
             </div>
             <div class="card-body">
@@ -133,14 +134,14 @@ $stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
                         <tbody>
                             <?php foreach ($distribusi_list as $distribusi): 
                                 $status_class = 'bg-secondary';
-                                if ($distribusi['status'] == 'dikirim') $status_class = 'bg-success';
-                                elseif ($distribusi['status'] == 'dikirim') $status_class = 'bg-warning';
-                                elseif ($distribusi['status'] == 'dibatalkan') $status_class = 'bg-danger';
+                                if ($distribusi['status'] == 'dikirim') $status_class = 'bg-primary';
+                                elseif ($distribusi['status'] == 'dikirim') $status_class = 'bg-primary';
+                                elseif ($distribusi['status'] == 'dibatalkan') $status_class = 'bg-secondary';
                             ?>
                             <tr>
                                 <td><?= date('d/m/Y', strtotime($distribusi['tanggal_distribusi'])) ?></td>
                                 <td>
-                                    <span class="badge bg-danger">
+                                    <span class="badge" style="background: #c62828;">
                                         <?= $distribusi['nama_gol_darah'] ?><?= $distribusi['rhesus'] ?>
                                     </span>
                                 </td>
@@ -163,7 +164,7 @@ $stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
                 
                 <?php if ($stats['total_distribusi'] > 10): ?>
                 <div class="text-center mt-3">
-                    <a href="?action=rumah_sakit_laporan&id=<?= $rs['id_rs'] ?>" class="btn btn-outline-primary">
+                    <a href="?action=rumah_sakit_laporan&id=<?= $rs['id_rs'] ?>" class="btn" style="background: #c62828; color: white; border: none;">
                         <i class="fas fa-list me-1"></i>Lihat Semua Distribusi (<?= $stats['total_distribusi'] ?>)
                     </a>
                 </div>

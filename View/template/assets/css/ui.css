@@ -144,9 +144,39 @@ body,
 /* Main content and cards */
 main,
 .main-content {
-  padding: 1.25rem 1.25rem;
+  padding: 2rem 2rem;
   background: transparent; /* ensure background gradient shows through */
   min-height: auto; /* allow content to flow naturally */
+}
+
+/* Page title spacing - reduce gap after navbar */
+/* Headings: remove large top margins so titles appear close after navbar */
+h1,
+.detail-page-header h1 {
+  margin-top: 0; /* prevent cumulative spacing with wrapper */
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+h2 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Reduce top spacing from Bootstrap utility classes (e.g., mt-4 on main)
+   Use a gentle override on the main wrapper only so left/right padding
+   remains intact and other layout spacing is unaffected. */
+main.page-wrapper {
+  margin-top: 0.25rem !important;
+  padding-top: 0 !important; /* ensure no extra inner padding */
+}
+
+/* Reduce top spacing for the alerts container directly under the navbar
+   (this prevents an empty alerts container with `.mt-4` from creating a
+   large gap between navbar and page content). */
+nav + .container-fluid.mt-4 {
+  margin-top: 0.25rem !important;
+  padding-top: 0 !important;
 }
 .card {
   border-radius: var(--radius);
@@ -510,7 +540,26 @@ main,
 
 /* Utility to keep consistent spacing */
 .container-fluid.main {
-  padding: 1rem 2rem;
+  padding: 2rem 2rem;
+}
+
+/* Global page wrapper to ensure no content touches viewport edges
+   Apply this class to the main layout wrapper to provide consistent
+   horizontal padding and center content on large screens. */
+.page-wrapper {
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 576px) {
+  .page-wrapper {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 }
 
 /* Animated gradient background for auth pages and post-login pages */
@@ -905,6 +954,15 @@ textarea {
 
 /* Material Symbols styling */
 .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
   font-size: 20px !important;
+  display: inline-block;
+  line-height: 1;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Default variations (can be overridden by adding inline variation settings) */
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
 }

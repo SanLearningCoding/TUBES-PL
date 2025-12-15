@@ -49,22 +49,37 @@ class PendonorController {
         // Proses kontak: hanya simpan angka
         $kontak = preg_replace('/\D+/', '', $kontak_raw);
 
-        // Cek screening fields
-        // Perbaikan typo: 'has_hepetitis_b' -> 'has_hepatitis_b'
-        $has_disease = isset($_POST['has_hepatitis_b']) ||
-                      isset($_POST['has_hepatitis_c']) ||
-                      isset($_POST['has_aids']) ||
-                      isset($_POST['has_hemofilia']) ||
-                      isset($_POST['has_sickle_cell']) ||
-                      isset($_POST['has_thalassemia']) ||
-                      isset($_POST['has_leukemia']) ||
-                      isset($_POST['has_lymphoma']) ||
-                      isset($_POST['has_myeloma']) ||
-                      isset($_POST['has_cjd']);
-
-        // Cek juga other_illness
-        $has_other_illness = !empty(trim($_POST['other_illness'] ?? ''));
-        $is_healthy = !$has_disease && !$has_other_illness;
+        // Determine health status (is_layak) based on screening diseases and other_illness:
+        // - is_layak = 0 (TIDAK LAYAK/Merah): if ANY screening disease checkbox is checked
+        // - is_layak = 1 (LAYAK/Kuning): if NO screening diseases but other_illness is filled
+        // - is_layak = 2 (SEHAT/Hijau): if NO screening diseases AND NO other_illness
+        
+        $screening_diseases = [
+            'has_hepatitis_b', 'has_hepatitis_c', 'has_aids', 'has_hemofilia',
+            'has_sickle_cell', 'has_thalassemia', 'has_leukemia', 'has_lymphoma',
+            'has_myeloma', 'has_cjd'
+        ];
+        
+        // Check if any screening disease checkbox is checked
+        $has_disease = false;
+        foreach ($screening_diseases as $disease_field) {
+            if (isset($_POST[$disease_field]) && $_POST[$disease_field] == 1) {
+                $has_disease = true;
+                break;
+            }
+        }
+        
+        // Check if other_illness is filled
+        $other_illness_filled = !empty(trim($_POST['other_illness'] ?? ''));
+        
+        // Calculate is_layak status based on business rules
+        if ($has_disease) {
+            $is_layak_status = 0; // TIDAK LAYAK (merah)
+        } elseif ($other_illness_filled) {
+            $is_layak_status = 1; // LAYAK (kuning)
+        } else {
+            $is_layak_status = 2; // SEHAT (hijau)
+        }
 
         // --- VALIDASI ---
         $errors = [];
@@ -109,7 +124,7 @@ class PendonorController {
             'has_myeloma' => isset($_POST['has_myeloma']) ? 1 : 0,
             'has_cjd' => isset($_POST['has_cjd']) ? 1 : 0,
             'other_illness' => $_POST['other_illness'] ?? '',
-            'is_layak' => $is_healthy ? 1 : 0,  // Layak hanya jika tidak ada penyakit apapun
+            'is_layak' => $is_layak_status,  // 0 = TIDAK LAYAK, 1 = LAYAK, 2 = SEHAT
             // 'created_at' => date('Y-m-d H:i:s') // Tambahkan jika kolom ada di DB dan tidak otomatis
         ];
 
@@ -167,20 +182,32 @@ class PendonorController {
             $kontak = preg_replace('/\D+/', '', $kontak_raw);
 
             // Cek screening fields dari POST
-            $has_disease = isset($_POST['has_hepatitis_b']) ||
-                        isset($_POST['has_hepatitis_c']) ||
-                        isset($_POST['has_aids']) ||
-                        isset($_POST['has_hemofilia']) ||
-                        isset($_POST['has_sickle_cell']) ||
-                        isset($_POST['has_thalassemia']) ||
-                        isset($_POST['has_leukemia']) ||
-                        isset($_POST['has_lymphoma']) ||
-                        isset($_POST['has_myeloma']) ||
-                        isset($_POST['has_cjd']);
-
-            // Cek juga other_illness
-            $has_other_illness = !empty(trim($_POST['other_illness'] ?? ''));
-            $is_healthy = !$has_disease && !$has_other_illness;
+            $screening_diseases = [
+                'has_hepatitis_b', 'has_hepatitis_c', 'has_aids', 'has_hemofilia',
+                'has_sickle_cell', 'has_thalassemia', 'has_leukemia', 'has_lymphoma',
+                'has_myeloma', 'has_cjd'
+            ];
+            
+            // Check if any screening disease checkbox is checked
+            $has_disease = false;
+            foreach ($screening_diseases as $disease_field) {
+                if (isset($_POST[$disease_field]) && $_POST[$disease_field] == 1) {
+                    $has_disease = true;
+                    break;
+                }
+            }
+            
+            // Check if other_illness is filled
+            $other_illness_filled = !empty(trim($_POST['other_illness'] ?? ''));
+            
+            // Calculate is_layak status based on business rules
+            if ($has_disease) {
+                $is_layak_status = 0; // TIDAK LAYAK (merah)
+            } elseif ($other_illness_filled) {
+                $is_layak_status = 1; // LAYAK (kuning)
+            } else {
+                $is_layak_status = 2; // SEHAT (hijau)
+            }
 
             // Validasi sederhana
             if (empty($nama) || strlen($kontak) < 6 || is_null($id_gol_darah)) {
@@ -207,9 +234,8 @@ class PendonorController {
                 'has_myeloma' => isset($_POST['has_myeloma']) ? 1 : 0,
                 'has_cjd' => isset($_POST['has_cjd']) ? 1 : 0,
                 'other_illness' => $_POST['other_illness'] ?? '',
-                // --- PENTING: Hitung dan sertakan is_layak ---
-                'is_layak' => $is_healthy ? 1 : 0, // 1 jika sehat, 0 jika tidak layak
-                // --- END PENTING ---
+                // IMPORTANT: Calculate is_layak correctly: 0 = TIDAK LAYAK, 1 = LAYAK, 2 = SEHAT
+                'is_layak' => $is_layak_status,
             ];
             // --- AKHIR PERUBAHAN ---
 

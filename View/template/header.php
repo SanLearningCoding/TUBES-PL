@@ -12,7 +12,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css  ">
     <!-- Material Symbols -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined  :opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=unarchive" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <!-- Custom UI enhancements -->
     <link href="View/template/assets/css/ui.css?v=<?php echo time(); ?>" rel="stylesheet">
     <!-- Custom color overrides - uncomment CSS rules di file ini untuk customize warna -->
@@ -195,8 +195,8 @@
         </div>
     </div>
 
-    <!-- Main content wrapper: full width. Child views include content inside this block. -->
-    <main class="container-fluid mt-4">
+    <!-- Main content wrapper: full width with global page wrapper to avoid edge-to-edge content -->
+    <main class="container-fluid mt-4 page-wrapper">
         <div class="row">
             <div class="col-12 main-content">
                 <!-- Konten halaman akan dimasukkan di sini oleh file view masing-masing -->

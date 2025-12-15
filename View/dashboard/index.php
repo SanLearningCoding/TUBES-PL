@@ -116,7 +116,7 @@ $distribusi_bulan_ini = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
 </style>
 
 <div class="hero">
-    <h1>Selamat Datang</h1>
+    <h1>Dashboard Manajemen Donor Darah</h1>
 </div>
 
 <!-- Maintainer: debug banner removed -->

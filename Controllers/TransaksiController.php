@@ -231,9 +231,10 @@ class TransaksiController {
                 exit;
             }
 
-            // Validasi status kesehatan (jika kolom is_layak ada)
-            if (isset($pendonor['is_layak']) && $pendonor['is_layak'] != 1) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Transaksi ditolak! Pendonor dengan status kesehatan tidak layak tidak dapat melakukan transaksi donasi.', 'icon' => 'exclamation-triangle'];
+            // Validasi status kesehatan: hanya tolak jika is_layak == 0 (TIDAK LAYAK)
+            // Izinkan jika is_layak == 1 (LAYAK) atau is_layak == 2 (SEHAT)
+            if (isset($pendonor['is_layak']) && $pendonor['is_layak'] == 0) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Transaksi ditolak! Pendonor dengan status kesehatan TIDAK LAYAK tidak dapat melakukan transaksi donasi.', 'icon' => 'exclamation-triangle'];
                 header('Location: index.php?action=transaksi_create');
                 exit;
             }
