@@ -40,28 +40,34 @@ class PendonorModel {
 
     public function getAllPendonor() {
         if ($this->hasColumn('pendonor', 'id_gol_darah')) {
-            $stmt = $this->db->prepare("SELECT p.*, gd.nama_gol_darah, gd.rhesus
-                FROM pendonor p
-                LEFT JOIN golongan_darah gd ON p.id_gol_darah = gd.id_gol_darah
-                WHERE p.is_deleted = 0
-                ORDER BY p.id_pendonor DESC");
+            $builder = new QueryBuilder($this->db, 'pendonor p');
+            return $builder->select('p.*, gd.nama_gol_darah, gd.rhesus')
+                ->join('golongan_darah gd', 'p.id_gol_darah = gd.id_gol_darah', 'LEFT')
+                ->where('p.is_deleted', 0)
+                ->orderBy('p.id_pendonor', 'DESC')
+                ->getResultArray();
         } else {
-            $stmt = $this->db->prepare("SELECT p.* FROM pendonor p WHERE p.is_deleted = 0 ORDER BY p.id_pendonor DESC");
+            $builder = new QueryBuilder($this->db, 'pendonor p');
+            return $builder->select('p.*')
+                ->where('p.is_deleted', 0)
+                ->orderBy('p.id_pendonor', 'DESC')
+                ->getResultArray();
         }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getPendonorById($id_pendonor) {
         if ($this->hasColumn('pendonor', 'id_gol_darah')) {
-            $stmt = $this->db->prepare("SELECT p.*, gd.nama_gol_darah, gd.rhesus FROM pendonor p
-                LEFT JOIN golongan_darah gd ON p.id_gol_darah = gd.id_gol_darah
-                WHERE p.id_pendonor = ?");
+            $builder = new QueryBuilder($this->db, 'pendonor p');
+            return $builder->select('p.*, gd.nama_gol_darah, gd.rhesus')
+                ->join('golongan_darah gd', 'p.id_gol_darah = gd.id_gol_darah', 'LEFT')
+                ->where('p.id_pendonor', $id_pendonor)
+                ->getRowArray();
         } else {
-            $stmt = $this->db->prepare("SELECT p.* FROM pendonor p WHERE p.id_pendonor = ?");
+            $builder = new QueryBuilder($this->db, 'pendonor p');
+            return $builder->select('p.*')
+                ->where('p.id_pendonor', $id_pendonor)
+                ->getRowArray();
         }
-        $stmt->execute([$id_pendonor]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function insertPendonor($data) {

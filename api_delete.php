@@ -1,4 +1,5 @@
 <?php
+// api_delete.php
 // API untuk menangani soft delete via AJAX
 // Menerima POST request dengan action dan id
 
@@ -86,6 +87,15 @@ function translateDatabaseError($errorMsg, $context = '') {
 }
 
 try {
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    $action = $input['action'] ?? '';
+
+    // --- TAMBAHKAN LOGGING INI ---
+    error_log("API_DELETE.PHP DEBUG: Raw Input: " . file_get_contents('php://input'));
+    error_log("API_DELETE.PHP DEBUG: Action received: '$action'");
+    error_log("API_DELETE.PHP DEBUG: Input Array: " . print_r($input, true));
+    // --- AKHIR TAMBAHKAN LOGGING ---
     switch ($action) {
         case 'pendonor_delete':
             // SOFT DELETE PENDONOR
@@ -995,16 +1005,56 @@ try {
             try {
                 $stmt = $db->prepare("UPDATE transaksi_donasi SET is_deleted = 0, deleted_at = NULL WHERE id_transaksi = ?");
                 $ok = $stmt->execute([$id]);
-                
                 if ($ok && $stmt->rowCount() > 0) {
-                    echo json_encode(['success' => true, 'message' => 'Transaksi berhasil dipulihkan dari arsip']);
+                    echo json_encode(['success' => true, 'message' => 'Data transaksi berhasil dipulihkan dari arsip']);
                 } else {
                     http_response_code(404);
-                    echo json_encode(['success' => false, 'message' => 'Transaksi tidak ditemukan']);
+                    echo json_encode(['success' => false, 'message' => 'Data transaksi tidak ditemukan']);
                 }
             } catch (PDOException $e) {
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Gagal memulihkan transaksi']);
+            }
+            break;
+
+        case 'transaksi_bulk_restore':
+            // BULK RESTORE TRANSAKSI dari trash
+            if (empty($ids)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Tidak ada data yang dipilih']);
+                exit;
+            }
+            // Validate dan sanitize IDs
+            $bulk_ids = array_filter(array_map('intval', $ids));
+            if (empty($bulk_ids)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
+                exit;
+            }
+
+            try {
+                $db->beginTransaction();
+                $restored = 0;
+                $failed = [];
+                foreach ($bulk_ids as $id_transaksi) {
+                    $stmt = $db->prepare("UPDATE transaksi_donasi SET is_deleted = 0, deleted_at = NULL WHERE id_transaksi = ? AND is_deleted = 1"); // Tambahkan is_deleted = 1 untuk keamanan
+                    $ok = $stmt->execute([$id_transaksi]);
+                    if ($ok && $stmt->rowCount() > 0) { // Periksa apakah baris benar-benar diupdate
+                        $restored++;
+                    } else {
+                        $failed[] = "Transaksi ID $id_transaksi tidak ditemukan";
+                    }
+                }
+                $db->commit();
+                $message = "$restored data transaksi berhasil dipulihkan dari arsip";
+                if (!empty($failed)) {
+                    $message .= '. Gagal: ' . implode('; ', $failed);
+                }
+                echo json_encode(['success' => $restored > 0, 'message' => $message]);
+            } catch (PDOException $e) {
+                $db->rollBack();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Gagal restore: ' . htmlspecialchars($e->getMessage())]);
             }
             break;
 

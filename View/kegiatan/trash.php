@@ -1,4 +1,5 @@
 <?php 
+// View/kegiatan/trash.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -65,7 +66,6 @@ if (!$check || $check->rowCount() === 0) {
                         <th>Tanggal</th>
                         <th>Lokasi</th>
                         <th>Dihapus Pada</th>
-                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,16 +80,6 @@ if (!$check || $check->rowCount() === 0) {
                         <td><?= date('d/m/Y', strtotime($k['tanggal'])) ?></td>
                         <td><?= htmlspecialchars($k['lokasi']) ?></td>
                         <td><?= $k['deleted_at'] ? date('d/m/Y H:i', strtotime($k['deleted_at'])) : '-' ?></td>
-                        <td>
-                            <button type="button" class="btn btn-success btn-sm me-1" 
-                                onclick="deleteItem(<?= $k['id_kegiatan'] ?>, 'kegiatan_restore', 'kegiatan', event)">
-                                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">unarchive</span>
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" 
-                                onclick="deleteItem(<?= $k['id_kegiatan'] ?>, 'kegiatan_permanent_delete', 'kegiatan', event)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

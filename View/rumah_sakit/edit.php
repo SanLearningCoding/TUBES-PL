@@ -1,4 +1,5 @@
 <?php 
+// View/rumah_sakit/edit.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -31,7 +32,10 @@ if (!$rs) {
 
 <div class="card">
     <div class="card-body">
-        <form action="?action=rumah_sakit_update&id=<?= $rs['id_rs'] ?>" method="POST">
+        <!-- PERUBAHAN: Tambahkan input hidden untuk id_rs -->
+        <form action="?action=rumah_sakit_update" method="POST">
+            <input type="hidden" name="id_rs" value="<?= $rs['id_rs'] ?>"> 
+            <!-- END PERUBAHAN -->
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">

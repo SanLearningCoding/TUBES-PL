@@ -1,4 +1,6 @@
 <?php 
+
+// View/distribusi/trash.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -64,7 +66,6 @@ $distribusi_arsip = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Tanggal Distribusi</th>
                         <th>Dihapus Pada</th>
                         <th>Status Pengiriman</th>
-                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -101,17 +102,6 @@ $distribusi_arsip = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 elseif ($s === 'dibatalkan') echo 'Dibatalkan';
                                 else echo htmlspecialchars($s);
                             ?>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-success btn-sm me-1" 
-                                onclick="deleteItem(<?= $d['id_distribusi'] ?>, 'distribusi_restore', 'distribusi', event)">
-                                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">unarchive</span>
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" 
-                                onclick="deleteItem(<?= $d['id_distribusi'] ?>, 'distribusi_permanent_delete', 'distribusi', event)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

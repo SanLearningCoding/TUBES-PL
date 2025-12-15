@@ -1,4 +1,7 @@
 <?php
+
+// Config/Database.php
+
 class Database {
     private $host = "localhost";
     private $db_name = "pmi_darah";

@@ -1,7 +1,7 @@
             </div>
         </div>
     </main>
-
+    <!--  View/template/footer.php -->
     <!-- Footer -->
     <footer class="footer-simple mt-auto">
         <p>&copy; 2024 <strong>Sistem Manajemen Stok Darah PMI</strong></p>

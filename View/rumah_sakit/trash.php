@@ -65,7 +65,6 @@ if (!$check || $check->rowCount() === 0) {
                         <th>Alamat</th>
                         <th>Kontak</th>
                         <th>Dihapus Pada</th>
-                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,16 +79,6 @@ if (!$check || $check->rowCount() === 0) {
                         <td class="rs-address text-break" style="max-width:360px; white-space: normal;"><?= htmlspecialchars($rs['alamat']) ?></td>
                         <td class="text-nowrap"><i class="fas fa-phone me-1"></i><?= htmlspecialchars($rs['kontak']) ?></td>
                         <td><?= $rs['deleted_at'] ? date('d/m/Y H:i', strtotime($rs['deleted_at'])) : '-' ?></td>
-                        <td>
-                            <button type="button" class="btn btn-success btn-sm me-1" 
-                                onclick="deleteItem(<?= $rs['id_rs'] ?>, 'rumah_sakit_restore', 'rumah_sakit', event)">
-                                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">unarchive</span>
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" 
-                                onclick="deleteItem(<?= $rs['id_rs'] ?>, 'rumah_sakit_permanent_delete', 'rumah_sakit', event)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -102,6 +91,8 @@ if (!$check || $check->rowCount() === 0) {
             <p class="text-muted mb-0">Data rumah sakit yang diarsipkan akan muncul di sini.</p>
         </div>
         <?php endif; ?>
+        <!-- Baris berikut ini adalah yang menyebabkan error sebelumnya dan TIDAK ADA DALAM KODE YANG BENAR -->
+        <!-- <?php endif; ?> </div> </div><div class="card mt-3"> ... (isi salah lainnya) ... -->
     </div>
 </div>
 
@@ -316,4 +307,4 @@ function bulkRestoreItems(ids, table) {
 }
 </script>
 
-<?php include Path::template('footer.php'); ?>
+<?php include Path::template('footer.php');?>

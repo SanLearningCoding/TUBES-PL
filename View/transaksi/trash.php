@@ -1,4 +1,5 @@
 <?php 
+// View/transaksi/trash.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -22,7 +23,7 @@ $trashed_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="detail-page-header">
-    <h1><i class="fas fa-archive me-2"></i>Arsip Transaksi Donasi</h1>
+    <h1><i class="fas fa-archive me-2"></i>Arsip Transaksi Donor</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="?action=transaksi" class="btn btn-back me-2">
             <i class="fas fa-arrow-left me-1"></i>Kembali
@@ -48,6 +49,10 @@ $trashed_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <span id="selectionInfo" class="text-muted align-self-center">
                     <small id="selectedCountText">0 data terpilih</small>
                 </span>
+                <!-- Tombol Batal Pilihan Massal (awalnya disembunyikan) -->
+                <button id="cancelSelectionBtn" type="button" class="btn btn-sm btn-outline-secondary ms-auto" style="display:none;" onclick="cancelBulkSelection('transaksi')">
+                    <i class="fas fa-times me-1"></i> Batal
+                </button>
             </div>
         </div>
         
@@ -64,7 +69,6 @@ $trashed_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Kegiatan</th>
                         <th>Tanggal Donor</th>
                         <th>Dihapus Pada</th>
-                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,16 +92,6 @@ $trashed_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 ? date('d/m/Y H:i', strtotime($t['deleted_at'])) 
                                 : '-' ?>
                         </td>
-                        <td>
-                            <button type="button" class="btn btn-success btn-sm me-1" 
-                                onclick="deleteItem(<?= $t['id_transaksi'] ?>, 'transaksi_restore', 'transaksi', event)">
-                                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">unarchive</span>
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" 
-                                onclick="deleteItem(<?= $t['id_transaksi'] ?>, 'transaksi_permanent_delete', 'transaksi', event)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -112,216 +106,360 @@ $trashed_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
     </div>
 </div>
-
 <script>
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Add change listeners to all checkboxes
-    const checkboxes = document.querySelectorAll('.transaksi-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            updateBulkDeleteButton('transaksi');
-        });
-    });
-    
-    // Add change listener to select all checkbox
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            toggleSelectAll(this, 'transaksi');
-        });
+    // Fungsi untuk toggle select all
+    function toggleSelectAll(source, className) {
+        const checkboxes = document.querySelectorAll('.' + className + '-checkbox');
+        checkboxes.forEach(checkbox => checkbox.checked = source.checked);
+        updateBulkDeleteButton(className);
+        updateCancelButton(className);
     }
-    
-    // Add click listeners to action buttons
-    const bulkRestoreBtn = document.getElementById('bulkRestoreBtn');
-    const bulkDeleteBtn = document.getElementById('bulkDeleteAllBtn');
-    
-    if (bulkRestoreBtn) {
-        bulkRestoreBtn.addEventListener('click', function() {
-            bulkRestoreSelected('transaksi');
-        });
-    }
-    
-    if (bulkDeleteBtn) {
-        bulkDeleteBtn.addEventListener('click', function() {
-            bulkDeleteSelected('transaksi');
-        });
-    }
-});
 
-function toggleSelectAll(checkbox, table) {
-    const checkboxes = document.querySelectorAll('.' + table + '-checkbox');
-    checkboxes.forEach(cb => cb.checked = checkbox.checked);
-    updateBulkDeleteButton(table);
-}
+    // Fungsi untuk update tombol bulk delete/restore dan info seleksi
+    function updateBulkDeleteButton(className) {
+        const selectedCheckboxes = document.querySelectorAll('.' + className + '-checkbox:checked');
+        const count = selectedCheckboxes.length;
+        const restoreBtn = document.getElementById('bulkRestoreBtn');
+        const deleteBtn = document.getElementById('bulkDeleteAllBtn');
+        const selectionInfo = document.getElementById('selectionInfo');
+        const cancelBtn = document.getElementById('cancelSelectionBtn');
 
-function updateBulkDeleteButton(table) {
-    const checkboxes = document.querySelectorAll('.' + table + '-checkbox:checked');
-    const bulkRestoreBtn = document.getElementById('bulkRestoreBtn');
-    const bulkDeleteBtn = document.getElementById('bulkDeleteAllBtn');
-    const selectedCountText = document.getElementById('selectedCountText');
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    
-    if (checkboxes.length > 0) {
-        bulkRestoreBtn.style.display = 'inline-flex';
-        bulkDeleteBtn.style.display = 'inline-flex';
-        selectedCountText.textContent = checkboxes.length + ' data terpilih';
-        
-        // Update select all checkbox
-        const allCheckboxes = document.querySelectorAll('.' + table + '-checkbox');
-        selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
-    } else {
-        bulkRestoreBtn.style.display = 'none';
-        bulkDeleteBtn.style.display = 'none';
-        selectedCountText.textContent = '0 data terpilih';
-        selectAllCheckbox.checked = false;
-    }
-}
-
-function bulkDeleteSelected(table) {
-    const checkboxes = document.querySelectorAll('.' + table + '-checkbox:checked');
-    if (checkboxes.length === 0) {
-        alert('Pilih minimal 1 data untuk dihapus');
-        return;
-    }
-    
-    const ids = Array.from(checkboxes).map(cb => cb.value);
-    showCustomConfirm(`Apakah Anda yakin ingin menghapus PERMANEN ${ids.length} data terpilih?<br><strong>Peringatan: Ini tidak dapat dikembalikan!</strong>`, () => {
-        bulkDeleteItems(ids, table);
-    });
-}
-
-function bulkRestoreSelected(table) {
-    const checkboxes = document.querySelectorAll('.' + table + '-checkbox:checked');
-    if (checkboxes.length === 0) {
-        alert('Pilih minimal 1 data untuk dipulihkan');
-        return;
-    }
-    
-    const ids = Array.from(checkboxes).map(cb => cb.value);
-    showCustomConfirm(`Apakah Anda yakin ingin memulihkan ${ids.length} data terpilih dari arsip?`, () => {
-        bulkRestoreItems(ids, table);
-    });
-}
-
-function bulkDeleteItems(ids, table) {
-    // Collect rows to delete
-    const rowsToDelete = ids.map(id => document.querySelector(`tr:has([value="${id}"])`))
-                            .filter(row => row !== null);
-    
-    const apiUrl = '<?= Path::API() ?>api_delete.php';
-    
-    fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            ids: ids,
-            action: table + '_bulk_permanent_delete'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Animate removal of rows
-            rowsToDelete.forEach((row, index) => {
-                setTimeout(() => {
-                    row.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out';
-                    row.style.opacity = '0';
-                    row.style.height = '0';
-                    row.style.overflow = 'hidden';
-                    row.style.paddingTop = '0';
-                    row.style.paddingBottom = '0';
-                    
-                    setTimeout(() => row.remove(), 300);
-                }, index * 50);
-            });
-            
-            showPageAlert(
-                `${ids.length} data berhasil dihapus secara permanen`,
-                'success',
-                3000
-            );
-            
-            // Reset bulk delete button
-            setTimeout(() => {
-                document.getElementById('bulkRestoreBtn').style.display = 'none';
-                document.getElementById('bulkDeleteAllBtn').style.display = 'none';
-                document.getElementById('selectAllCheckbox').checked = false;
-                document.getElementById('selectedCountText').textContent = '0 data terpilih';
-            }, rowsToDelete.length * 50 + 300);
-        } else {
-            showPageAlert(
-                data.message || 'Gagal menghapus data',
-                'danger',
-                5000
-            );
-        }
-    })
-    .catch(error => {
-        console.error('Delete error:', error);
-        showPageAlert(
-            'Error: ' + error.message,
-            'danger',
-            5000
-        );
-    });
-}
-
-function bulkRestoreItems(ids, table) {
-    const apiUrl = '<?= Path::API() ?>api_delete.php';
-    
-    fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            ids: ids,
-            action: table + '_bulk_restore'
-        })
-    })
-    .then(response => {
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Langsung hapus row dari tabel tanpa delay
-            const rowsToDelete = ids.map(id => document.querySelector(`tr:has([value="${id}"])`))
-                                    .filter(row => row !== null);
-            
-            rowsToDelete.forEach((row, index) => {
-                setTimeout(() => {
-                    row.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out';
-                    row.style.opacity = '0';
-                    row.style.height = '0';
-                    row.style.overflow = 'hidden';
-                    row.style.paddingTop = '0';
-                    row.style.paddingBottom = '0';
-                    
-                    setTimeout(() => row.remove(), 300);
-                }, index * 50);
-            });
-            
-            // Update header checkbox dan tombol bulk
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = false;
+        if (restoreBtn && deleteBtn) {
+            if (count > 0) {
+                restoreBtn.style.display = 'inline-block';
+                deleteBtn.style.display = 'inline-block';
+                selectionInfo.style.display = 'block';
+                cancelBtn.style.display = 'inline-block'; // Tampilkan tombol batal
+            } else {
+                restoreBtn.style.display = 'none';
+                deleteBtn.style.display = 'none';
+                selectionInfo.style.display = 'none';
+                cancelBtn.style.display = 'none'; // Sembunyikan tombol batal
             }
-            updateBulkDeleteButton(table);
-            
-            // Tampilkan alert success menggunakan page alert
-            showPageAlert(`${ids.length} data berhasil dipulihkan dari arsip`, 'success', 3000);
-        } else {
-            showPageAlert(data.message || 'Gagal memulihkan data', 'danger', 5000);
         }
-    })
-    .catch(error => {
-        console.error('Restore error:', error);
-        showPageAlert('Error mengembalikan data', 'danger', 5000);
+        document.getElementById('selectedCountText').textContent = count + ' data terpilih';
+    }
+
+    // Fungsi untuk batal pilihan massal
+    function cancelBulkSelection(className) {
+        const checkboxes = document.querySelectorAll('.' + className + '-checkbox');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        updateBulkDeleteButton(className);
+        // Tombol batal otomatis disembunyikan oleh updateBulkDeleteButton
+    }
+
+    // Fungsi untuk update tampilan tombol batal
+    function updateCancelButton(className) {
+        const selectedCheckboxes = document.querySelectorAll('.' + className + '-checkbox:checked');
+        const cancelBtn = document.getElementById('cancelSelectionBtn');
+        if (cancelBtn) {
+            if (selectedCheckboxes.length > 0) {
+                cancelBtn.style.display = 'inline-block';
+            } else {
+                cancelBtn.style.display = 'none';
+            }
+        }
+    }
+
+    // Inisialisasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tambahkan event listener onchange ke semua checkbox individu
+        const individualCheckboxes = document.querySelectorAll('.transaksi-checkbox');
+        individualCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateBulkDeleteButton('transaksi');
+                updateCancelButton('transaksi');
+            });
+        });
+
+        // Tambahkan event listener onchange ke checkbox "select all"
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                // Fungsi toggleSelectAll akan memanggil updateBulkDeleteButton dan updateCancelButton
+            });
+        }
+
+        // Tambahkan event listener ke tombol restore massal
+        const bulkRestoreBtn = document.getElementById('bulkRestoreBtn');
+        if (bulkRestoreBtn) {
+            bulkRestoreBtn.addEventListener('click', function() {
+                bulkRestoreSelected('transaksi');
+            });
+        }
+
+         // Tambahkan event listener ke tombol hapus permanen massal
+        const bulkDeleteBtn = document.getElementById('bulkDeleteAllBtn');
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', function() {
+                bulkDeleteSelected('transaksi');
+            });
+        }
+
+        // Panggil sekali untuk menginisialisasi tampilan tombol jika ada data terpilih (misalnya dari state sebelumnya)
+        updateBulkDeleteButton('transaksi');
+        updateCancelButton('transaksi');
     });
-}
+
+    // Fungsi untuk restore massal
+    function bulkRestoreSelected(table) {
+        const checkboxes = document.querySelectorAll('.' + table + '-checkbox:checked');
+        if (checkboxes.length === 0) {
+            showPageAlert('Pilih minimal 1 data untuk dipulihkan', 'info', 3000);
+            return;
+        }
+
+        // Definisikan 'ids' di awal fungsi
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+        // Panggil showCustomConfirm dan kirim 'ids' dan 'table' ke fungsi callback
+        showCustomConfirm(`Apakah Anda yakin ingin memulihkan ${ids.length} data terpilih dari arsip?`, () => {
+            // Fungsi callback yang dipanggil jika pengguna menekan 'Ya'
+            // 'ids' dan 'table' tersedia di sini karena closure
+            bulkRestoreItems(ids, table);
+        });
+    }
+
+        // Fungsi untuk hapus permanen massal
+    function bulkDeleteSelected(table) {
+        const checkboxes = document.querySelectorAll('.' + table + '-checkbox:checked');
+        if (checkboxes.length === 0) {
+            showPageAlert('Pilih minimal 1 data untuk dihapus', 'info', 3000);
+            return;
+        }
+
+        // Definisikan 'ids' di awal fungsi
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+        // Panggil showCustomConfirm dan kirim 'ids' dan 'table' ke fungsi callback
+        showCustomConfirm(`Apakah Anda yakin ingin menghapus PERMANEN ${checkboxes.length} data terpilih?<br><strong>Peringatan: Ini tidak dapat dikembalikan!</strong>`, () => {
+            // Fungsi callback yang dipanggil jika pengguna menekan 'Ya'
+            // 'ids' dan 'table' tersedia di sini karena closure
+            bulkDeleteItems(ids, table);
+        });
+    }
+
+    // Fungsi untuk restore items (menggunakan API)
+    function bulkRestoreItems(ids, table) {
+        // Validasi parameter
+        if (!Array.isArray(ids) || ids.length === 0 || typeof table !== 'string' || table.trim() === '') {
+            console.error("bulkRestoreItems: Invalid parameters received.", {ids, table});
+            // Tampilkan alert error umum
+            showPageAlert('Parameter untuk pemulihan tidak valid.', 'danger', 5000);
+            return;
+        }
+
+        const apiUrl = '<?= Path::API() ?>api_delete.php';
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ids: ids,
+                action: table + '_bulk_restore'
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Restore API Response:", data);
+
+            if (typeof data.success !== 'boolean') {
+                 console.error("Restore API: Unexpected response format", data);
+                 // Tampilkan alert error umum
+                 showPageAlert('Respon dari server tidak valid.', 'danger', 5000);
+                 return;
+            }
+
+            if (data.success) {
+                try {
+                    // Langsung hapus row dari tabel tanpa delay
+                    const rowsToDelete = ids.map(id => document.querySelector(`tr:has([value="${id}"])`))
+                                            .filter(row => row !== null);
+
+                    rowsToDelete.forEach((row, index) => {
+                        setTimeout(() => {
+                            row.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out';
+                            row.style.opacity = '0';
+                            row.style.height = '0';
+                            row.style.overflow = 'hidden';
+                            row.style.paddingTop = '0';
+                            row.style.paddingBottom = '0';
+
+                            setTimeout(() => row.remove(), 300);
+                        }, index * 50);
+                    });
+
+                    // Update header checkbox dan tombol bulk
+                    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = false;
+                    }
+                    updateBulkDeleteButton(table);
+                    updateCancelButton(table); // Pastikan tombol batal juga diupdate
+
+                    // Tampilkan alert success menggunakan page alert
+                    showPageAlert(`${ids.length} data berhasil dipulihkan dari arsip`, 'success', 3000);
+                } catch (innerError) {
+                     console.error("Error during successful restore handling:", innerError);
+                     // Tampilkan alert error jika gagal memproses sukses (misalnya error DOM)
+                     showPageAlert('Terjadi kesalahan saat memperbarui tampilan setelah sukses.', 'danger', 5000);
+                }
+            } else {
+                // Respons sukses tetapi operasi gagal di server
+                showPageAlert(data.message || 'Gagal memulihkan data', 'danger', 5000);
+            }
+        })
+        .catch(error => {
+            console.error('Restore error:', error); // Log error untuk debugging
+            // Tampilkan alert error jika fetch gagal (jaringan, bukan JSON, error server)
+            showPageAlert('Error mengembalikan data: ' + error.message, 'danger', 5000);
+        });
+    }
+
+    // Fungsi untuk hapus items (menggunakan API)
+    function bulkDeleteItems(ids, table) {
+        // Validasi parameter
+        if (!Array.isArray(ids) || ids.length === 0 || typeof table !== 'string' || table.trim() === '') {
+            console.error("bulkDeleteItems: Invalid parameters received.", {ids, table});
+            // Tampilkan alert error umum
+            showPageAlert('Parameter untuk penghapusan tidak valid.', 'danger', 5000);
+            return;
+        }
+
+        // Collect rows to delete
+        const rowsToDelete = ids.map(id => document.querySelector(`tr:has([value="${id}"])`))
+                                .filter(row => row !== null);
+
+        const apiUrl = '<?= Path::API() ?>api_delete.php';
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ids: ids,
+                action: table + '_bulk_permanent_delete'
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Delete API Response:", data);
+
+            if (typeof data.success !== 'boolean') {
+                 console.error("Delete API: Unexpected response format", data);
+                 // Tampilkan alert error umum
+                 showPageAlert('Respon dari server tidak valid.', 'danger', 5000);
+                 return;
+            }
+
+            if (data.success) {
+                try {
+                    // Animate removal of rows
+                    rowsToDelete.forEach((row, index) => {
+                        setTimeout(() => {
+                            row.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out';
+                            row.style.opacity = '0';
+                            row.style.height = '0';
+                            row.style.overflow = 'hidden';
+                            row.style.paddingTop = '0';
+                            row.style.paddingBottom = '0';
+
+                            setTimeout(() => row.remove(), 300);
+                        }, index * 50);
+                    });
+
+                    // Reset bulk delete button
+                    setTimeout(() => {
+                        const bulkRestoreBtn = document.getElementById('bulkRestoreBtn');
+                        const bulkDeleteBtn = document.getElementById('bulkDeleteAllBtn');
+                        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                        const selectedCountText = document.getElementById('selectedCountText');
+
+                        if (bulkRestoreBtn) bulkRestoreBtn.style.display = 'none';
+                        if (bulkDeleteBtn) bulkDeleteBtn.style.display = 'none';
+                        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                        if (selectedCountText) selectedCountText.textContent = '0 data terpilih';
+
+                        updateBulkDeleteButton(table);
+                        updateCancelButton(table); // Pastikan tombol batal juga diupdate
+                    }, rowsToDelete.length * 50 + 300);
+
+                    // Show success notification
+                    showPageAlert(`${ids.length} data berhasil dihapus secara permanen`, 'success', 3000);
+                } catch (innerError) {
+                     console.error("Error during successful delete handling:", innerError);
+                     // Tampilkan alert error jika gagal memproses sukses (misalnya error DOM)
+                     showPageAlert('Terjadi kesalahan saat memperbarui tampilan setelah sukses.', 'danger', 5000);
+                }
+            } else {
+                // Respons sukses tetapi operasi gagal di server
+                showPageAlert(data.message || 'Gagal menghapus data', 'danger', 5000);
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error); // Log error untuk debugging
+            // Tampilkan alert error jika fetch gagal (jaringan, bukan JSON, error server)
+            showPageAlert('Error menghapus data: ' + error.message, 'danger', 5000);
+        });
+    }
+
+    // Fungsi untuk deleteItem individual (jika ada) - Juga menggunakan showPageAlert
+    function deleteItem(id, action, name, event) {
+        event.preventDefault();
+        let confirmationMessage = '';
+        let successMessage = '';
+        let errorMessage = '';
+
+        if (action.includes('permanent_delete')) {
+            confirmationMessage = `Apakah Anda yakin ingin menghapus ${name} secara permanen?`;
+            successMessage = `${name} berhasil dihapus permanen.`;
+            errorMessage = `Gagal menghapus ${name} secara permanen.`;
+        } else if (action.includes('restore')) {
+            confirmationMessage = `Apakah Anda yakin ingin memulihkan ${name} dari arsip?`;
+            successMessage = `${name} berhasil dipulihkan.`;
+            errorMessage = `Gagal memulihkan ${name}.`;
+        } else {
+            confirmationMessage = `Apakah Anda yakin ingin menghapus ${name}?`;
+            successMessage = `${name} berhasil dihapus.`;
+            errorMessage = `Gagal menghapus ${name}.`;
+        }
+
+        // Ganti confirm dengan showCustomConfirm
+        showCustomConfirm(confirmationMessage, () => {
+            fetch(`index.php?action=${action}&id=${id}`, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Ganti alert dengan showPageAlert
+                    showPageAlert(data.message || successMessage, 'success', 3000);
+                    location.reload(); // Refresh halaman setelah sukses
+                } else {
+                    // Ganti alert dengan showPageAlert
+                    showPageAlert(data.message || errorMessage, 'danger', 5000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Ganti alert dengan showPageAlert
+                showPageAlert(errorMessage, 'danger', 5000);
+            });
+        });
+    }
 </script>
 
 <?php include Path::template('footer.php'); ?>

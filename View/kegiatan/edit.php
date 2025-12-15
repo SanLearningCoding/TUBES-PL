@@ -1,4 +1,5 @@
 <?php 
+// View/kegiatan/edit.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -31,7 +32,11 @@ if (!$kegiatan) {
 
 <div class="card">
     <div class="card-body">
-        <form action="?action=kegiatan_update&id=<?= $kegiatan['id_kegiatan'] ?>" method="POST">
+        <form action="?action=kegiatan_update" method="POST"> <!-- Ganti action, hapus ?id=... -->
+            <!-- TAMBAHKAN: Input tersembunyi untuk id_kegiatan -->
+            <input type="hidden" name="id_kegiatan" value="<?= $kegiatan['id_kegiatan'] ?>">
+            <!-- END TAMBAHAN -->
+
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
@@ -54,6 +59,13 @@ if (!$kegiatan) {
                 <input type="text" class="form-control" id="lokasi" name="lokasi" 
                        value="<?= htmlspecialchars($kegiatan['lokasi']) ?>" required>
             </div>
+
+            <!-- TAMBAHKAN: Input untuk keterangan (opsional), bisa sebagai textarea -->
+            <div class="mb-3">
+                <label for="keterangan" class="form-label">Keterangan</label>
+                <textarea class="form-control" id="keterangan" name="keterangan" rows="3"><?= htmlspecialchars($kegiatan['keterangan'] ?? '') ?></textarea>
+            </div>
+            <!-- END TAMBAHAN -->
             
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                 <a href="?action=kegiatan" class="btn btn-secondary me-md-2">Batal</a>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/QueryBuilder.php';
+
 // Model/StokModel.php
 
 class StokModel {
@@ -10,27 +11,24 @@ class StokModel {
         $this->db = $database->getConnection();
     }
 
-    // ... metode lainnya tetap sama ...
-
+    // ... (metode lainnya tetap sama ...) ...
     public function getStokById($id_stok) {
         // Return stok fields, golongan, dan tanggal donor dari transaksi
-        $query = "SELECT sd.*, 
-                         gd.nama_gol_darah, gd.rhesus,
-                         td.tanggal_donasi
-                  FROM stok_darah sd
-                  LEFT JOIN golongan_darah gd ON sd.id_gol_darah = gd.id_gol_darah
-                  LEFT JOIN transaksi_donasi td ON sd.id_transaksi = td.id_transaksi
-                  WHERE sd.id_stok = ? AND sd.is_deleted = 0";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$id_stok]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        $result = $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi')
+            ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah', 'LEFT')
+            ->join('transaksi_donasi td', 'sd.id_transaksi = td.id_transaksi', 'LEFT')
+            ->where('sd.id_stok', $id_stok)
+            ->where('sd.is_deleted', 0)
+            ->getRowArray();
         if ($result) return $result;
 
         // Fallback: if the left-join query returned nothing (for odd schema reasons), try a simple query to check existence
-        $stmt2 = $this->db->prepare('SELECT * FROM stok_darah WHERE id_stok = ? AND is_deleted = 0');
-        $stmt2->execute([$id_stok]);
-        $fallback = $stmt2->fetch(PDO::FETCH_ASSOC);
+        $builder2 = new QueryBuilder($this->db, 'stok_darah');
+        $fallback = $builder2->select('*')
+            ->where('id_stok', $id_stok)
+            ->where('is_deleted', 0)
+            ->getRowArray();
         if ($fallback) {
             // Add placeholder fields to match expected keys in views
             $fallback['nama_gol_darah'] = $fallback['id_gol_darah'] ?? null;
@@ -42,61 +40,41 @@ class StokModel {
 
     public function getDashboardStokRealtime() {
         // GANTI QUERYBUILDER DENGAN PDO BIASA
-        $query = "SELECT 
-                    gd.nama_gol_darah,
-                    gd.rhesus,
-                    COUNT(sd.id_stok) as total_kantong,
-                    SUM(sd.jumlah_kantong) as total_kantong_count,
-                    SUM(CASE WHEN sd.status = 'tersedia' THEN 1 ELSE 0 END) as tersedia,
-                    SUM(CASE WHEN sd.status = 'terpakai' THEN 1 ELSE 0 END) as terpakai,
-                    SUM(CASE WHEN sd.status = 'kadaluarsa' THEN 1 ELSE 0 END) as kadaluarsa
-                  FROM stok_darah sd
-                  JOIN golongan_darah gd ON sd.id_gol_darah = gd.id_gol_darah
-                  WHERE sd.status_uji = 'lolos' AND sd.is_deleted = 0
-                  GROUP BY gd.nama_gol_darah, gd.rhesus
-                  ORDER BY gd.nama_gol_darah, gd.rhesus";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select("gd.nama_gol_darah, gd.rhesus, COUNT(sd.id_stok) as total_kantong, SUM(sd.jumlah_kantong) as total_kantong_count, SUM(CASE WHEN sd.status = 'tersedia' THEN 1 ELSE 0 END) as tersedia, SUM(CASE WHEN sd.status = 'terpakai' THEN 1 ELSE 0 END) as terpakai, SUM(CASE WHEN sd.status = 'kadaluarsa' THEN 1 ELSE 0 END) as kadaluarsa")
+            ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah')
+            ->where('sd.status_uji', 'lolos')
+            ->where('sd.is_deleted', 0)
+            ->groupBy('gd.nama_gol_darah, gd.rhesus')
+            ->orderBy('gd.nama_gol_darah', 'ASC')
+            ->orderBy('gd.rhesus', 'ASC')
+            ->getResultArray();
     }
 
     public function updateStatusStok($id_stok, $status) {
         // GANTI QUERYBUILDER DENGAN PDO BIASA
-        $query = "UPDATE stok_darah SET status = ? WHERE id_stok = ?";
-        $stmt = $this->db->prepare($query);
-        return $stmt->execute([$status, $id_stok]);
+        $builder = new QueryBuilder($this->db, 'stok_darah');
+        return $builder->where('id_stok', $id_stok)
+            ->update(['status' => $status]);
     }
 
     public function getStokTersedia() {
         // GANTI QUERYBUILDER DENGAN PDO BIASA
-                $query = "SELECT sd.*, gd.nama_gol_darah, gd.rhesus
-                                    FROM stok_darah sd
-                                    JOIN golongan_darah gd ON sd.id_gol_darah = gd.id_gol_darah
-                  WHERE sd.status = 'tersedia' 
-                    AND sd.status_uji = 'lolos'
-                    AND sd.is_deleted = 0
-                    AND sd.tanggal_kadaluarsa >= CURDATE()
-                  ORDER BY sd.tanggal_kadaluarsa ASC";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select('sd.*, gd.nama_gol_darah, gd.rhesus')
+            ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah')
+            ->where('sd.status', 'tersedia')
+            ->where('sd.status_uji', 'lolos')
+            ->where('sd.is_deleted', 0)
+            ->where('sd.tanggal_kadaluarsa', date('Y-m-d'), '>=')
+            ->orderBy('sd.tanggal_kadaluarsa', 'ASC')
+            ->getResultArray();
     }
 
     public function createStokPascaUji($id_transaksi, $dataStok) {
         // GANTI QUERYBUILDER DENGAN PDO BIASA
-        $columns = implode(', ', array_keys($dataStok));
-        $placeholders = implode(', ', array_fill(0, count($dataStok), '?'));
-        
-        $query = "INSERT INTO stok_darah ($columns) VALUES ($placeholders)";
-        $stmt = $this->db->prepare($query);
-        
-        try {
-            return $stmt->execute(array_values($dataStok));
-        } catch (Exception $e) {
-            return false;
-        }
+        $builder = new QueryBuilder($this->db, 'stok_darah');
+        return $builder->insert($dataStok);
     }
 
     /**
@@ -162,16 +140,16 @@ class StokModel {
      * Each row represents one kantong darah unit
      */
     public function getAllStocks() {
-        $query = "SELECT sd.id_stok, sd.id_transaksi, sd.id_gol_darah, sd.tanggal_pengujian, sd.status_uji, sd.status, sd.tanggal_kadaluarsa, sd.jumlah_kantong, sd.is_deleted,
-                         gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi
-                  FROM stok_darah sd
-                  LEFT JOIN golongan_darah gd ON sd.id_gol_darah = gd.id_gol_darah
-                  LEFT JOIN transaksi_donasi td ON sd.id_transaksi = td.id_transaksi
-                  WHERE sd.is_deleted = 0
-                  ORDER BY gd.nama_gol_darah, gd.rhesus, sd.tanggal_kadaluarsa ASC, sd.created_at DESC";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'stok_darah sd');
+        return $builder->select('sd.id_stok, sd.id_transaksi, sd.id_gol_darah, sd.tanggal_pengujian, sd.status_uji, sd.status, sd.tanggal_kadaluarsa, sd.jumlah_kantong, sd.is_deleted, gd.nama_gol_darah, gd.rhesus, td.tanggal_donasi')
+            ->join('golongan_darah gd', 'sd.id_gol_darah = gd.id_gol_darah', 'LEFT')
+            ->join('transaksi_donasi td', 'sd.id_transaksi = td.id_transaksi', 'LEFT')
+            ->where('sd.is_deleted', 0)
+            ->orderBy('gd.nama_gol_darah', 'ASC')
+            ->orderBy('gd.rhesus', 'ASC')
+            ->orderBy('sd.tanggal_kadaluarsa', 'ASC')
+            ->orderBy('sd.created_at', 'DESC')
+            ->getResultArray();
     }
 
     /**
@@ -179,21 +157,13 @@ class StokModel {
      * Shows total kantong per golongan (for dashboard/summary views)
      */
     public function getAggregatedStockSummary() {
-        $query = "SELECT 
-                    gd.id_gol_darah,
-                    gd.nama_gol_darah,
-                    gd.rhesus,
-                    COUNT(sd.id_stok) as jumlah_kantong,
-                    SUM(CASE WHEN sd.status = 'tersedia' THEN 1 ELSE 0 END) as tersedia,
-                    SUM(CASE WHEN sd.status = 'terpakai' THEN 1 ELSE 0 END) as terpakai,
-                    SUM(CASE WHEN sd.status = 'kadaluarsa' THEN 1 ELSE 0 END) as kadaluarsa
-                  FROM golongan_darah gd
-                  LEFT JOIN stok_darah sd ON sd.id_gol_darah = gd.id_gol_darah AND sd.is_deleted = 0
-                  GROUP BY gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus
-                  ORDER BY gd.nama_gol_darah, gd.rhesus";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'golongan_darah gd');
+        return $builder->select("gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus, COUNT(sd.id_stok) as jumlah_kantong, SUM(CASE WHEN sd.status = 'tersedia' THEN 1 ELSE 0 END) as tersedia, SUM(CASE WHEN sd.status = 'terpakai' THEN 1 ELSE 0 END) as terpakai, SUM(CASE WHEN sd.status = 'kadaluarsa' THEN 1 ELSE 0 END) as kadaluarsa")
+            ->join('stok_darah sd', 'sd.id_gol_darah = gd.id_gol_darah AND sd.is_deleted = 0', 'LEFT')
+            ->groupBy('gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus')
+            ->orderBy('gd.nama_gol_darah', 'ASC')
+            ->orderBy('gd.rhesus', 'ASC')
+            ->getResultArray();
     }
 
     public function getTotalAvailableByGolongan($id_gol) {
@@ -223,50 +193,29 @@ class StokModel {
         } catch (Exception $e) {
             // ignore
         }
-        $stmt = $this->db->prepare("INSERT INTO stok_darah (id_transaksi, id_gol_darah, tanggal_pengujian, status_uji, tanggal_kadaluarsa, volume_ml, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        try {
-            return $stmt->execute([
-                isset($data['id_transaksi']) ? $data['id_transaksi'] : null,
-                $data['id_gol_darah'],
-                $data['tanggal_pengujian'],
-                $data['status_uji'] ?? 'lolos',
-                $data['tanggal_kadaluarsa'],
-                $data['volume_ml'],
-                $data['status'] ?? 'tersedia'
-            ]);
-        } catch (Exception $e) {
-            return false;
-        }
+        $builder = new QueryBuilder($this->db, 'stok_darah');
+        return $builder->insert($data);
     }
 
     public function updateStock($id_stok, $data) {
-        $stmt = $this->db->prepare("UPDATE stok_darah SET id_gol_darah = ?, volume_ml = ?, tanggal_pengujian = ?, tanggal_kadaluarsa = ?, status_uji = ?, status = ? WHERE id_stok = ?");
-        return $stmt->execute([
-            $data['id_gol_darah'],
-            $data['volume_ml'],
-            $data['tanggal_pengujian'],
-            $data['tanggal_kadaluarsa'],
-            $data['status_uji'],
-            $data['status'],
-            $id_stok
-        ]);
+        $builder = new QueryBuilder($this->db, 'stok_darah');
+        return $builder->where('id_stok', $id_stok)
+            ->update($data);
     }
 
    public function deleteStock($id_stok) {
         // Soft delete: tandai stok sebagai diarsipkan, tapi tidak benar-benar dihapus
-        $stmt = $this->db->prepare("
-            UPDATE stok_darah 
-            SET is_deleted = 1, deleted_at = NOW()
-            WHERE id_stok = ?
-        ");
-        return $stmt->execute([$id_stok]);
+        $builder = new QueryBuilder($this->db, 'stok_darah');
+        return $builder->where('id_stok', $id_stok)
+            ->update(['is_deleted' => 1, 'deleted_at' => date('Y-m-d H:i:s')]);
     }
 
 
     public function getAllGolongan() {
-        $stmt = $this->db->prepare('SELECT id_gol_darah, nama_gol_darah, rhesus FROM golongan_darah ORDER BY nama_gol_darah');
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'golongan_darah');
+        return $builder->select('id_gol_darah, nama_gol_darah, rhesus')
+            ->orderBy('nama_gol_darah', 'ASC')
+            ->getResultArray();
     }
 
     /**
@@ -275,16 +224,21 @@ class StokModel {
      * to ensure expired units are marked without manual intervention.
      */
     public function updateExpiredStatuses() {
-        $stmt = $this->db->prepare("UPDATE stok_darah SET status = 'kadaluarsa' WHERE (tanggal_kadaluarsa IS NOT NULL AND tanggal_kadaluarsa < CURDATE()) AND status != 'kadaluarsa'");
-        return $stmt->execute();
+        $builder = new QueryBuilder($this->db, 'stok_darah');
+        return $builder->where('tanggal_kadaluarsa', date('Y-m-d'), '<')
+            ->where('status', 'kadaluarsa', '!=')
+            ->update(['status' => 'kadaluarsa']);
     }
 
     /**
      * Auto-generate stok from transaksi_donasi
      * Creates one stok record per kantong donated. Each record represents one unique unit.
      * tanggal_kadaluarsa is computed as tanggal_donasi + 42 days.
+     * --- PERBAIKAN: Fungsi ini sekarang menerima tanggal_kadaluarsa_input ---
+     * @param int $id_transaksi ID transaksi yang akan digunakan untuk membuat stok
+     * @param string|null $tanggal_kadaluarsa_input (Opsional) Jika disediakan, gunakan ini sebagai tanggal kadaluarsa. Jika tidak, hitung otomatis.
      */
-    public function generateStokFromTransaksi($id_transaksi) {
+    public function generateStokFromTransaksi($id_transaksi, $tanggal_kadaluarsa_input = null) { // Tambahkan parameter
         try {
             $this->db->beginTransaction();
 
@@ -298,6 +252,7 @@ class StokModel {
 
             if (!$transaksi) {
                 $this->db->rollBack();
+                error_log("StokModel: Transaksi dengan ID $id_transaksi tidak ditemukan saat generateStokFromTransaksi.");
                 return false;
             }
 
@@ -307,22 +262,43 @@ class StokModel {
 
             if (empty($id_gol) || empty($tanggal_donasi)) {
                 $this->db->rollBack();
+                error_log("StokModel: ID Golongan atau Tanggal Donasi kosong untuk transaksi ID $id_transaksi.");
                 return false;
             }
 
-            $tanggal_kadaluarsa = date('Y-m-d', strtotime($tanggal_donasi . ' +42 days'));
+            // --- PERBAIKAN: Gunakan tanggal_kadaluarsa_input jika disediakan ---
+            if ($tanggal_kadaluarsa_input) {
+                // Validasi tanggal_kadaluarsa_input (opsional tapi disarankan)
+                $date_obj = DateTime::createFromFormat('Y-m-d', $tanggal_kadaluarsa_input);
+                if (!$date_obj || $date_obj->format('Y-m-d') !== $tanggal_kadaluarsa_input) {
+                    $this->db->rollBack();
+                    error_log("StokModel: Format tanggal_kadaluarsa_input '$tanggal_kadaluarsa_input' tidak valid untuk transaksi ID $id_transaksi.");
+                    return false;
+                }
+                $tanggal_kadaluarsa = $tanggal_kadaluarsa_input;
+                error_log("StokModel: Menggunakan tanggal_kadaluarsa dari input: $tanggal_kadaluarsa untuk transaksi ID $id_transaksi.");
+            } else {
+                // Jika tidak disediakan, hitung otomatis
+                $tanggal_kadaluarsa = date('Y-m-d', strtotime($tanggal_donasi . ' +42 days'));
+                error_log("StokModel: Menghitung tanggal_kadaluarsa otomatis: $tanggal_kadaluarsa untuk transaksi ID $id_transaksi (dari $tanggal_donasi + 42 hari).");
+            }
+            // --- END PERBAIKAN ---
 
             $insert = $this->db->prepare("INSERT INTO stok_darah (id_transaksi, id_gol_darah, tanggal_pengujian, status_uji, tanggal_kadaluarsa, status, is_deleted) VALUES (?, ?, NULL, 'lolos', ?, 'tersedia', 0)");
             for ($i = 0; $i < $units; $i++) {
                 $ok = $insert->execute([$id_transaksi, $id_gol, $tanggal_kadaluarsa]);
-                if (!$ok) throw new Exception('Failed inserting stok unit');
+                if (!$ok) {
+                     error_log("StokModel: Gagal menyisipkan stok unit ke-$i untuk transaksi ID $id_transaksi.");
+                     throw new Exception('Failed inserting stok unit');
+                }
             }
 
             $this->db->commit();
+            error_log("StokModel: Berhasil membuat $units unit stok untuk transaksi ID $id_transaksi dengan tanggal_kadaluarsa $tanggal_kadaluarsa.");
             return true;
         } catch (Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
-            error_log("generateStokFromTransaksi error: " . $e->getMessage());
+            error_log("generateStokFromTransaksi error (ID: $id_transaksi, Input Tgl Kadaluarsa: $tanggal_kadaluarsa_input): " . $e->getMessage());
             return false;
         }
     }
@@ -332,17 +308,13 @@ class StokModel {
      * Only units with status = 'tersedia' and not expired are counted.
      */
     public function getAvailableStockSummary() {
-        $sql = "SELECT gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus, COALESCE(COUNT(sd.id_stok),0) AS total_kantong
-                FROM golongan_darah gd
-                LEFT JOIN stok_darah sd ON sd.id_gol_darah = gd.id_gol_darah
-                    AND sd.is_deleted = 0
-                    AND sd.status = 'tersedia'
-                    AND (sd.tanggal_kadaluarsa IS NULL OR sd.tanggal_kadaluarsa >= CURDATE())
-                GROUP BY gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus
-                ORDER BY gd.nama_gol_darah, gd.rhesus";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $builder = new QueryBuilder($this->db, 'golongan_darah gd');
+        return $builder->select("gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus, COALESCE(COUNT(sd.id_stok),0) AS total_kantong")
+            ->join('stok_darah sd', 'sd.id_gol_darah = gd.id_gol_darah AND sd.is_deleted = 0 AND sd.status = \'tersedia\' AND (sd.tanggal_kadaluarsa IS NULL OR sd.tanggal_kadaluarsa >= CURDATE())', 'LEFT')
+            ->groupBy('gd.id_gol_darah, gd.nama_gol_darah, gd.rhesus')
+            ->orderBy('gd.nama_gol_darah', 'ASC')
+            ->orderBy('gd.rhesus', 'ASC')
+            ->getResultArray();
     }
 }
 ?>

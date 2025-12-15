@@ -1,4 +1,5 @@
 <?php 
+// View/pendonor/create.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 ?>
@@ -166,7 +167,7 @@ input[type="text"], input[type="email"], input[type="date"] {
 
     <div class="card card-compact">
         <div class="card-body">
-            <form action="?action=pendonor_store" method="POST" id="pendonorForm">
+            <form action="?action=pendonor_store_controller" method="POST" id="pendonorForm"> <!-- Ganti nama action -->
                 <!-- Nama dan Kontak -->
                 <div class="select-row">
                     <div class="form-group-compact">

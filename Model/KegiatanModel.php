@@ -14,7 +14,8 @@ class KegiatanModel {
 
     public function getAllKegiatan() {
         $builder = new QueryBuilder($this->db, 'kegiatan_donasi');
-        return $builder->orderBy('tanggal', 'DESC')
+        return $builder->select('*')
+                      ->orderBy('tanggal', 'DESC')
                       ->getResultArray();
     }
 
@@ -25,7 +26,7 @@ class KegiatanModel {
 
     public function getKegiatanById($id_kegiatan) {
         $builder = new QueryBuilder($this->db, 'kegiatan_donasi');
-        return $builder->get()
+        return $builder->select('*')
                       ->where('id_kegiatan', $id_kegiatan)
                       ->getRowArray();
     }

@@ -1,4 +1,5 @@
 <?php 
+// View/transaksi/detail.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -201,12 +202,6 @@ if (!$transaksi) {
                     <th>Riwayat Penyakit</th>
                     <td><?= htmlspecialchars($transaksi['riwayat_penyakit']) ?: 'Tidak ada' ?></td>
                 </tr>
-                <?php if (isset($transaksi['other_illness']) && !empty($transaksi['other_illness'])): ?>
-                <tr>
-                    <th>Penyakit Lainnya</th>
-                    <td><?= htmlspecialchars($transaksi['other_illness']) ?></td>
-                </tr>
-                <?php endif; ?>
             </table>
         </div>
     </div>

@@ -1,4 +1,5 @@
 <?php
+// View/stok/edit.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php');
 

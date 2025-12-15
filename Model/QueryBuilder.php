@@ -1,4 +1,6 @@
 <?php
+
+// Model/QueryBuilder.php
 class QueryBuilder {
     private $pdo;
     private $table;
@@ -45,6 +47,21 @@ class QueryBuilder {
         return $this;
     }
 
+    // Tambahkan method whereRaw
+    public function whereRaw($condition) {
+        $this->whereConditions[] = $condition; // Tidak menambahkan parameter karena raw
+        return $this;
+    }
+
+    // Tambahkan method orWhereRaw
+    public function orWhereRaw($condition) {
+        if (empty($this->whereConditions)) {
+            return $this->whereRaw($condition); // Jika belum ada where sebelumnya, gunakan whereRaw biasa
+        }
+        $this->whereConditions[] = "OR $condition";
+        return $this;
+    }
+
     public function groupBy($column) {
         $this->groupBy[] = $column;
         return $this;
@@ -74,14 +91,25 @@ class QueryBuilder {
         $setClause = implode(', ', array_map(function($col) {
             return "$col = ?";
         }, array_keys($data)));
-        
+
+        // Simpan params dari data yang akan di-update
+        $updateParams = array_values($data);
+
+        // Bangun query UPDATE SET dengan params dari data
         $this->query = "UPDATE $this->table SET $setClause";
-        $this->params = array_values($data);
-        
+
+        // Simpan params WHERE yang mungkin sudah ada sebelumnya
+        $whereParams = $this->params;
+
+        // Set params untuk data update (ini akan menimpa $this->params)
+        $this->params = $updateParams;
+
         if (!empty($this->whereConditions)) {
             $this->query .= " WHERE " . implode(' AND ', $this->whereConditions);
+            // Gabungkan params WHERE ke akhir params update
+            $this->params = array_merge($this->params, $whereParams);
         }
-        
+
         return $this->execute();
     }
 

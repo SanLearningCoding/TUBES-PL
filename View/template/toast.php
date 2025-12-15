@@ -1,7 +1,8 @@
+<!-- View/template/toast.php -->
 <div id="toast-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 90%; max-width: 500px;"></div>
 <div id="alert-container" style="position: fixed; top: 80px; left: 0; right: 0; z-index: 10000; padding: 20px; pointer-events: none;"></div>
-
 <style>
+/* --- Toast Notification Styles --- */
 .toast-notification {
     background: white;
     border-radius: 12px;
@@ -129,7 +130,7 @@
     animation: slideOutTop 0.3s ease-out;
 }
 
-/* Alert style notification */
+/* --- Alert Notification Styles --- */
 .alert-notification {
     display: flex;
     align-items: center;
@@ -217,7 +218,7 @@
     }
 }
 
-/* Custom Modal Styles */
+/* --- Custom Modal Styles --- */
 .custom-modal-backdrop {
     position: fixed;
     top: 0;
@@ -369,254 +370,3 @@
     transform: translateY(0);
 }
 </style>
-
-<script>
-// Display flash message dari session jika ada
-document.addEventListener('DOMContentLoaded', function() {
-    <?php
-    if (isset($_SESSION['flash'])) {
-        $flash = $_SESSION['flash'];
-        $type = $flash['type'] ?? 'info';
-        $message = $flash['message'] ?? '';
-        $title = $flash['title'] ?? ucfirst($type);
-        echo "showToast('" . addslashes($message) . "', '$type', 3000, '" . addslashes($title) . "');";
-        unset($_SESSION['flash']);
-    }
-    ?>
-});
-
-function showToast(message, type = 'success', duration = 3000, title = null) {
-    const container = document.getElementById('toast-container');
-    
-    const icons = {
-        'success': 'fas fa-check-circle',
-        'danger': 'fas fa-exclamation-circle',
-        'info': 'fas fa-info-circle'
-    };
-    
-    const titles = {
-        'success': 'Berhasil',
-        'danger': 'Gagal',
-        'info': 'Informasi'
-    };
-    
-    const toastTitle = title || titles[type] || 'Notifikasi';
-    
-    const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.innerHTML = `
-        <i class="${icons[type]} toast-icon"></i>
-        <div class="toast-content">
-            <div class="toast-title">${toastTitle}</div>
-            <div class="toast-message">${message}</div>
-        </div>
-        <button class="toast-close" onclick="removeToast(this.closest('.toast-notification'))">&times;</button>
-    `;
-    
-    container.appendChild(toast);
-    
-    if (duration > 0) {
-        setTimeout(() => {
-            removeToast(toast);
-        }, duration);
-    }
-}
-
-function removeToast(element) {
-    element.classList.add('removing');
-    setTimeout(() => {
-        element.remove();
-    }, 300);
-}
-
-function showAlert(message, type = 'success', duration = 3000) {
-    const container = document.getElementById('alert-container');
-    
-    const icons = {
-        'success': 'fas fa-check-circle',
-        'danger': 'fas fa-exclamation-circle',
-        'info': 'fas fa-info-circle'
-    };
-    
-    const alert = document.createElement('div');
-    alert.className = `alert-notification ${type}`;
-    alert.innerHTML = `
-        <i class="${icons[type]} alert-icon"></i>
-        <div class="alert-content">${message}</div>
-        <button class="alert-close" onclick="removeAlert(this.closest('.alert-notification'))">&times;</button>
-    `;
-    
-    container.appendChild(alert);
-    
-    if (duration > 0) {
-        setTimeout(() => {
-            removeAlert(alert);
-        }, duration);
-    }
-}
-
-function removeAlert(element) {
-    element.classList.add('removing');
-    setTimeout(() => {
-        element.remove();
-    }, 300);
-}
-
-function deleteItem(id, action, table, clickEvent) {
-    // Get the row from the clicked button
-    let row = null;
-    if (clickEvent && clickEvent.target) {
-        row = clickEvent.target.closest('button')?.closest('tr') || 
-              clickEvent.currentTarget?.closest('tr');
-    }
-    
-    if (!row) {
-        // Fallback: search for row that contains a button with onclick mentioning this id
-        const buttons = document.querySelectorAll(`button[onclick*="${id}"]`);
-        if (buttons.length > 0) {
-            row = buttons[0].closest('tr');
-        }
-    }
-    
-    let itemName = '';
-    
-    if (row) {
-        let targetColumn = 1; // Default: second column
-        
-        // Determine which column to extract based on table type
-        if (table === 'stok') {
-            // For stok: get first column (ID Stok)
-            targetColumn = 0;
-        } else if (table === 'kegiatan') {
-            // For kegiatan: get first column (Nama Kegiatan)
-            targetColumn = 0;
-        } else if (table === 'transaksi') {
-            // For transaksi: get second column (Pendonor name)
-            targetColumn = 1;
-        } else if (table === 'pendonor') {
-            // For pendonor: get second column (Name)
-            targetColumn = 1;
-        } else if (table === 'rumah_sakit') {
-            // For rumah_sakit: get second column (Name)
-            targetColumn = 1;
-        } else if (table === 'distribusi') {
-            // For distribusi: get second column
-            targetColumn = 1;
-        }
-        
-        const nameTd = row.querySelector(`td:nth-child(${targetColumn + 1})`);
-        if (nameTd) {
-            itemName = nameTd.textContent.trim().split('\n')[0]; // Get first line only
-        }
-    }
-    
-    // Use custom modal dialog instead of browser confirm for better UX
-    let confirmMsg = 'Apakah Anda yakin ingin menghapus data ini?';
-    if (itemName) {
-        confirmMsg = `Apakah Anda yakin ingin menghapus "${itemName}"?`;
-    }
-    
-    // Show custom confirmation dialog
-    showCustomConfirm(confirmMsg, () => {
-        // Callback when confirmed
-        performDelete(id, action, row);
-    });
-}
-
-function showCustomConfirm(message, onConfirm) {
-    // Create modal overlay
-    const backdrop = document.createElement('div');
-    backdrop.className = 'custom-modal-backdrop';
-    
-    // Create modal
-    const modal = document.createElement('div');
-    modal.className = 'custom-modal-dialog';
-    modal.innerHTML = `
-        <div class="custom-modal-content">
-            <div class="custom-modal-header">
-                <h5 class="custom-modal-title">Konfirmasi Penghapusan</h5>
-            </div>
-            <div class="custom-modal-body">
-                ${message}
-            </div>
-            <div class="custom-modal-footer">
-                <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-danger btn-lg" data-confirm="true">Hapus</button>
-            </div>
-        </div>
-    `;
-    
-    backdrop.appendChild(modal);
-    document.body.appendChild(backdrop);
-    
-    // Handle button clicks
-    const cancelBtn = modal.querySelector('[data-dismiss="modal"]');
-    const confirmBtn = modal.querySelector('[data-confirm="true"]');
-    
-    const closeModal = () => {
-        backdrop.classList.add('closing');
-        setTimeout(() => {
-            backdrop.remove();
-        }, 300);
-    };
-    
-    cancelBtn.addEventListener('click', closeModal);
-    confirmBtn.addEventListener('click', () => {
-        closeModal();
-        onConfirm();
-    });
-    
-    // Close on backdrop click
-    backdrop.addEventListener('click', (e) => {
-        if (e.target === backdrop) {
-            closeModal();
-        }
-    });
-}
-
-function performDelete(id, action, row) {
-    if (!row) {
-        row = document.querySelector(`tr:has(button[onclick*="${id}"])`);
-    }
-    
-    fetch('api_delete.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id: id,
-            action: action
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove row immediately with smooth animation
-            if (row) {
-                row.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out';
-                row.style.opacity = '0';
-                row.style.height = '0';
-                row.style.overflow = 'hidden';
-                row.style.paddingTop = '0';
-                row.style.paddingBottom = '0';
-                
-                setTimeout(() => {
-                    row.remove();
-                }, 300);
-            }
-            
-            // Show success notification
-            showAlert('Data berhasil dipindahkan ke tong sampah', 'success', 3000);
-        } else {
-            let errorMessage = data.message || 'Gagal menghapus data';
-            showAlert(errorMessage, 'danger', 5000);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Terjadi kesalahan saat menghapus data', 'danger', 5000);
-    });
-}
-
-</script>

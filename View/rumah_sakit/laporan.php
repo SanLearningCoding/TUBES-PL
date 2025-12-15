@@ -1,4 +1,5 @@
 <?php 
+// View/rumah_sakit/laporan.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 

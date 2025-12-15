@@ -1,4 +1,5 @@
 <?php
+// View/template/pagination.php
 /**
  * PAGINATION COMPONENT - Premium Style
  * Merah putih theme dengan animasi smooth dan responsive design

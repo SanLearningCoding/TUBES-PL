@@ -1,4 +1,5 @@
 <?php 
+// View/stok/index.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -14,7 +15,7 @@ $offset = ($page - 1) * $items_per_page;
 
 $where = "WHERE sd.is_deleted = 0";
 if (!empty($search)) {
-    $where .= " AND (gd.nama_gol_darah LIKE :search OR sd.status LIKE :search OR sd.status_uji LIKE :search)";
+    $where .= " AND (sd.id_stok LIKE :search OR gd.nama_gol_darah LIKE :search OR sd.status LIKE :search)";
 }
 
 // Count total
@@ -61,7 +62,7 @@ $stok_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="card-body">
         <form method="GET" class="d-flex gap-2">
             <input type="hidden" name="action" value="stok">
-            <input type="text" name="search" class="form-control" placeholder="Cari golongan darah, status, atau status uji..." value="<?= htmlspecialchars($search) ?>">
+            <input type="text" name="search" class="form-control" placeholder="Cari id, golongan darah, atau status...." value="<?= htmlspecialchars($search) ?>">
             <button type="submit" class="btn" style="background: #c62828; color: white; border: none;"><i class="fas fa-search"></i> Cari</button>
             <?php if (!empty($search)): ?>
             <a href="?action=stok" class="btn btn-secondary"><i class="fas fa-times"></i> Reset</a>
@@ -121,18 +122,18 @@ $stok_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 }
                                 ?>
                             </td>
-                            <td>
-                                <a href="?action=stok_detail&id=<?= $stok['id_stok'] ?>" 
-                                   class="btn btn-sm" style="background: #c62828; color: white; border: none;" title="Detail">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <?php if (!$is_expired): ?>
-                                <button onclick="deleteItem(<?= $stok['id_stok'] ?>, 'stok_delete', 'stok', event)" class="btn btn-danger btn-sm" title="Arsip">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
+                                <td>
+                                    <a href="?action=stok_detail&id=<?= $stok['id_stok'] ?>" 
+                                    class="btn btn-sm" style="background: #c62828; color: white; border: none;" title="Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <!-- Hapus kondisi if (!$is_expired) -->
+                                    <button onclick="deleteItem(<?= $stok['id_stok'] ?>, 'stok_delete', 'stok', event)" class="btn btn-danger btn-sm" title="Arsip">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <!-- Tutup kondisi if (hapus endif) -->
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>

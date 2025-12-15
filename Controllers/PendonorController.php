@@ -30,56 +30,100 @@ class PendonorController {
     }
 
     public function store() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // Validasi golongan darah
-            if (empty($_POST['id_gol_darah'])) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Golongan darah harus dipilih', 'icon' => 'exclamation-triangle'];
-                header('Location: index.php?action=pendonor_create');
-                exit;
-            }
-
-            // Cek screening fields
-            $has_disease = isset($_POST['has_hepatitis_b']) || 
-                          isset($_POST['has_hepatitis_c']) || 
-                          isset($_POST['has_aids']) || 
-                          isset($_POST['has_hemofilia']) || 
-                          isset($_POST['has_sickle_cell']) || 
-                          isset($_POST['has_thalassemia']) || 
-                          isset($_POST['has_leukemia']) || 
-                          isset($_POST['has_lymphoma']) || 
-                          isset($_POST['has_myeloma']) || 
-                          isset($_POST['has_cjd']);
-            
-            // Cek juga other_illness
-            $has_other_illness = !empty(trim($_POST['other_illness'] ?? ''));
-            $is_healthy = !$has_disease && !$has_other_illness;
-            
-            $data = [
-                'nama' => $_POST['nama'],
-                'kontak' => $_POST['kontak'],
-                'id_gol_darah' => (int)$_POST['id_gol_darah'],
-                'has_hepatitis_b' => isset($_POST['has_hepatitis_b']) ? 1 : 0,
-                'has_hepatitis_c' => isset($_POST['has_hepatitis_c']) ? 1 : 0,
-                'has_aids' => isset($_POST['has_aids']) ? 1 : 0,
-                'has_hemofilia' => isset($_POST['has_hemofilia']) ? 1 : 0,
-                'has_sickle_cell' => isset($_POST['has_sickle_cell']) ? 1 : 0,
-                'has_thalassemia' => isset($_POST['has_thalassemia']) ? 1 : 0,
-                'has_leukemia' => isset($_POST['has_leukemia']) ? 1 : 0,
-                'has_lymphoma' => isset($_POST['has_lymphoma']) ? 1 : 0,
-                'has_myeloma' => isset($_POST['has_myeloma']) ? 1 : 0,
-                'has_cjd' => isset($_POST['has_cjd']) ? 1 : 0,
-                'other_illness' => $_POST['other_illness'] ?? '',
-                'is_layak' => $is_healthy ? 1 : 0  // Layak hanya jika tidak ada penyakit apapun
-            ];
-
-            if ($this->pendonorModel->insertPendonor($data)) {
-                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Pendonor berhasil ditambahkan', 'icon' => 'check-circle'];
-            } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menambahkan pendonor', 'icon' => 'exclamation-triangle'];
-            }
-            header('Location: index.php?action=pendonor');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            // Jika bukan POST, redirect atau tampilkan error
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Akses tidak sah.', 'icon' => 'exclamation-triangle'];
+            header('Location: index.php?action=pendonor_create');
             exit;
         }
+
+        // Ambil data dari $_POST
+        $nama = trim($_POST['nama'] ?? '');
+        $tanggal_lahir_raw = $_POST['tanggal_lahir'] ?? null; // Ambil dulu, bisa null
+        $jenis_kelamin_raw = $_POST['jenis_kelamin'] ?? null; // Ambil dulu, bisa null
+        $alamat_raw = trim($_POST['alamat'] ?? ''); // Ambil dulu, bisa string kosong
+        $kontak_raw = $_POST['kontak'] ?? ''; // Ambil nilai mentah
+        $riwayat_penyakit_raw = trim($_POST['riwayat_penyakit'] ?? '');
+        $id_gol_darah = $_POST['id_gol_darah'] ?? null;
+
+        // Proses kontak: hanya simpan angka
+        $kontak = preg_replace('/\D+/', '', $kontak_raw);
+
+        // Cek screening fields
+        // Perbaikan typo: 'has_hepetitis_b' -> 'has_hepatitis_b'
+        $has_disease = isset($_POST['has_hepatitis_b']) ||
+                      isset($_POST['has_hepatitis_c']) ||
+                      isset($_POST['has_aids']) ||
+                      isset($_POST['has_hemofilia']) ||
+                      isset($_POST['has_sickle_cell']) ||
+                      isset($_POST['has_thalassemia']) ||
+                      isset($_POST['has_leukemia']) ||
+                      isset($_POST['has_lymphoma']) ||
+                      isset($_POST['has_myeloma']) ||
+                      isset($_POST['has_cjd']);
+
+        // Cek juga other_illness
+        $has_other_illness = !empty(trim($_POST['other_illness'] ?? ''));
+        $is_healthy = !$has_disease && !$has_other_illness;
+
+        // --- VALIDASI ---
+        $errors = [];
+        if (empty($nama)) {
+            $errors[] = 'Nama wajib diisi.';
+        }
+        if (strlen($kontak) < 6) { // Validasi panjang setelah filter
+            $errors[] = 'Nomor HP tidak valid. Minimal 6 digit.';
+        }
+        if (is_null($id_gol_darah)) {
+            $errors[] = 'Golongan darah wajib dipilih.';
+        }
+
+        if (!empty($errors)) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => implode('<br>', $errors), 'icon' => 'exclamation-triangle'];
+            header('Location: index.php?action=pendonor_create');
+            exit;
+        }
+        // --- END VALIDASI ---
+
+        // --- PERSIAPAN DATA UNTUK INSERT ---
+        // Hanya masukkan data yang sesuai dengan kolom di tabel 'pendonor'
+        // Kolom yang tidak ada di tabel harus dihilangkan dari array $data
+        // Berdasarkan skema database, kolom yang valid: nama, kontak, riwayat_penyakit, id_gol_darah, is_deleted, deleted_at, created_at, updated_at, has_*, other_illness, is_layak
+        // Kolom yang TIDAK ADA: tanggal_lahir, jenis_kelamin, alamat
+        $data = [
+            'nama' => $nama,
+            // 'tanggal_lahir' => $tanggal_lahir_raw, // Dihapus
+            // 'jenis_kelamin' => $jenis_kelamin_raw, // Dihapus
+            // 'alamat' => $alamat_raw, // Dihapus
+            'kontak' => $kontak, // Gunakan nama kolom yang sesuai dengan DB
+            'riwayat_penyakit' => $riwayat_penyakit_raw,
+            'id_gol_darah' => (int)$id_gol_darah,
+            'has_hepatitis_b' => isset($_POST['has_hepatitis_b']) ? 1 : 0,
+            'has_hepatitis_c' => isset($_POST['has_hepatitis_c']) ? 1 : 0,
+            'has_aids' => isset($_POST['has_aids']) ? 1 : 0,
+            'has_hemofilia' => isset($_POST['has_hemofilia']) ? 1 : 0,
+            'has_sickle_cell' => isset($_POST['has_sickle_cell']) ? 1 : 0,
+            'has_thalassemia' => isset($_POST['has_thalassemia']) ? 1 : 0,
+            'has_leukemia' => isset($_POST['has_leukemia']) ? 1 : 0,
+            'has_lymphoma' => isset($_POST['has_lymphoma']) ? 1 : 0,
+            'has_myeloma' => isset($_POST['has_myeloma']) ? 1 : 0,
+            'has_cjd' => isset($_POST['has_cjd']) ? 1 : 0,
+            'other_illness' => $_POST['other_illness'] ?? '',
+            'is_layak' => $is_healthy ? 1 : 0,  // Layak hanya jika tidak ada penyakit apapun
+            // 'created_at' => date('Y-m-d H:i:s') // Tambahkan jika kolom ada di DB dan tidak otomatis
+        ];
+
+        // --- END PERSIAPAN DATA ---
+
+        if ($this->pendonorModel->insertPendonor($data)) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Pendonor berhasil ditambahkan', 'icon' => 'check-circle'];
+        } else {
+            // Tambahkan logging untuk debugging jika gagal
+            error_log("PendonorController: Gagal insert ke DB. Data: " . print_r($data, true));
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menambahkan pendonor', 'icon' => 'exclamation-triangle'];
+        }
+        header('Location: index.php?action=pendonor');
+        exit; // Tambahkan exit
     }
 
     public function showDaftarPeringatan() {
@@ -105,24 +149,82 @@ class PendonorController {
         $this->view('pendonor/edit', $data);
     }
 
-    public function update($id) {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $data = [
-                'nama' => $_POST['nama'],
-                'kontak' => $_POST['kontak'],
-                'riwayat_penyakit' => $_POST['riwayat_penyakit'] ?? '',
-                'id_gol_darah' => $_POST['id_gol_darah'] ?? null
-            ];
+        public function update($id) {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                header('Location: index.php?action=pendonor');
+                exit;
+            }
 
+            // --- AWAL PERUBAHAN ---
+            // Ambil data dari $_POST dan proses
+            // Termasuk field-field screening dan other_illness
+            $nama = trim($_POST['nama'] ?? '');
+            $kontak_raw = $_POST['kontak'] ?? '';
+            $riwayat_penyakit_raw = trim($_POST['riwayat_penyakit'] ?? ''); // Ini sekarang diisi oleh JS
+            $id_gol_darah = $_POST['id_gol_darah'] ?? null;
+
+            // Proses kontak: hanya simpan angka
+            $kontak = preg_replace('/\D+/', '', $kontak_raw);
+
+            // Cek screening fields dari POST
+            $has_disease = isset($_POST['has_hepatitis_b']) ||
+                        isset($_POST['has_hepatitis_c']) ||
+                        isset($_POST['has_aids']) ||
+                        isset($_POST['has_hemofilia']) ||
+                        isset($_POST['has_sickle_cell']) ||
+                        isset($_POST['has_thalassemia']) ||
+                        isset($_POST['has_leukemia']) ||
+                        isset($_POST['has_lymphoma']) ||
+                        isset($_POST['has_myeloma']) ||
+                        isset($_POST['has_cjd']);
+
+            // Cek juga other_illness
+            $has_other_illness = !empty(trim($_POST['other_illness'] ?? ''));
+            $is_healthy = !$has_disease && !$has_other_illness;
+
+            // Validasi sederhana
+            if (empty($nama) || strlen($kontak) < 6 || is_null($id_gol_darah)) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Nama, kontak (min. 6 digit), dan golongan darah wajib diisi.', 'icon' => 'exclamation-triangle'];
+                header('Location: index.php?action=pendonor_edit&id=' . $id);
+                exit;
+            }
+
+            // Siapkan data untuk update
+            // Sertakan field-field screening dan other_illness juga
+            $data = [
+                'nama' => $nama,
+                'kontak' => $kontak, // Gunakan kontak yang sudah difilter
+                'riwayat_penyakit' => $riwayat_penyakit_raw, // Gunakan nilai dari JS/form
+                'id_gol_darah' => (int)$id_gol_darah,
+                'has_hepatitis_b' => isset($_POST['has_hepatitis_b']) ? 1 : 0,
+                'has_hepatitis_c' => isset($_POST['has_hepatitis_c']) ? 1 : 0,
+                'has_aids' => isset($_POST['has_aids']) ? 1 : 0,
+                'has_hemofilia' => isset($_POST['has_hemofilia']) ? 1 : 0,
+                'has_sickle_cell' => isset($_POST['has_sickle_cell']) ? 1 : 0,
+                'has_thalassemia' => isset($_POST['has_thalassemia']) ? 1 : 0,
+                'has_leukemia' => isset($_POST['has_leukemia']) ? 1 : 0,
+                'has_lymphoma' => isset($_POST['has_lymphoma']) ? 1 : 0,
+                'has_myeloma' => isset($_POST['has_myeloma']) ? 1 : 0,
+                'has_cjd' => isset($_POST['has_cjd']) ? 1 : 0,
+                'other_illness' => $_POST['other_illness'] ?? '',
+                // --- PENTING: Hitung dan sertakan is_layak ---
+                'is_layak' => $is_healthy ? 1 : 0, // 1 jika sehat, 0 jika tidak layak
+                // --- END PENTING ---
+            ];
+            // --- AKHIR PERUBAHAN ---
+
+            // Panggil model untuk update
             if ($this->pendonorModel->updatePendonor($id, $data)) {
-                $_SESSION['success'] = 'Pendonor berhasil diupdate';
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Pendonor berhasil diupdate', 'icon' => 'check-circle'];
             } else {
-                $_SESSION['error'] = 'Gagal mengupdate pendonor';
+                // Tambahkan logging untuk debugging jika gagal
+                error_log("PendonorController: Gagal update pendonor ID $id. Data: " . print_r($data, true));
+                error_log("PendonorController: Data POST: " . print_r($_POST, true)); // Log POST data juga untuk debugging
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal mengupdate pendonor', 'icon' => 'exclamation-triangle'];
             }
             header('Location: index.php?action=pendonor');
             exit;
         }
-    }
 
     // PERBAIKAN: Hapus storePendaftaran karena sudah ada di TransaksiController
     // atau tambahkan routing jika memang diperlukan

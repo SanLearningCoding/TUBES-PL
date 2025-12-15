@@ -2,6 +2,8 @@
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
+// View/dashboard/index.php
+
 // AMBIL DATA STATISTIK DARI DATABASE - PERBAIKI PATH
 require_once __DIR__ . '/../../Config/Database.php';
 $database = new Database();

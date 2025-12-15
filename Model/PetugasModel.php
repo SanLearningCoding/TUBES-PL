@@ -35,19 +35,19 @@ class PetugasModel {
 
     public function getAllPetugas() {
         $builder = new QueryBuilder($this->db, 'petugas');
-        return $builder->get()->getResultArray();
+        return $builder->select('*')->getResultArray();
     }
 
     public function getPetugasById($id_petugas) {
         $builder = new QueryBuilder($this->db, 'petugas');
-        return $builder->get()
+        return $builder->select('*')
                       ->where('id_petugas', $id_petugas)
                       ->getRowArray();
     }
 
     public function getPetugasByEmail($email) {
         $builder = new QueryBuilder($this->db, 'petugas');
-        $result = $builder->get()
+        $result = $builder->select('*')
                         ->where('email', $email)
                         ->getRowArray();
 

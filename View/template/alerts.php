@@ -1,4 +1,6 @@
-<?php if (isset($_SESSION['flash'])): ?>
+<?php 
+// View/template/alerts.php
+if (isset($_SESSION['flash'])): ?>
     <div class="alert alert-<?= $_SESSION['flash']['type'] ?> alert-dismissible fade show" role="alert">
         <i class="fas fa-<?= $_SESSION['flash']['icon'] ?? 'info-circle' ?> me-2"></i>
         <?= $_SESSION['flash']['message'] ?>

@@ -3,6 +3,7 @@
     </div>
 </div>
 </div>
+<!-- View\template\assets\auth_footer.php -->
 
 <!-- Footer -->
 <footer class="footer-simple mt-auto">

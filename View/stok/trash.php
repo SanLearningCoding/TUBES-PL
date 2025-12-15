@@ -1,4 +1,5 @@
 <?php 
+//  View/stok/trash.php
 include __DIR__ . '/../../Config/Path.php';
 include Path::template('header.php'); 
 
@@ -60,7 +61,6 @@ $stok_arsip = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Jumlah Kantong</th>
                         <th>Kadaluarsa</th>
                         <th>Status</th>
-                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -79,16 +79,6 @@ $stok_arsip = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?= $stok['deleted_at'] 
                                 ? date('d/m/Y H:i', strtotime($stok['deleted_at'])) 
                                 : '-' ?>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-success btn-sm me-1" 
-                                onclick="deleteItem(<?= $stok['id_stok'] ?>, 'stok_restore', 'stok', event)">
-                                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">unarchive</span>
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" 
-                                onclick="deleteItem(<?= $stok['id_stok'] ?>, 'stok_permanent_delete', 'stok', event)">
-                                <i class="fas fa-trash"></i>
-                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
