@@ -156,6 +156,37 @@ TUBES-PL/
 └── README.md                  # Documentation (file ini)
 ```
 
+**Controller: `LaporanController.php`**
+
+- **Lokasi:** `Controllers/LaporanController.php`
+- **Tujuan:** Menyediakan endpoint/view untuk laporan dan evaluasi data (kinerja donor, evaluasi stok, dan laporan distribusi). Controller ini bersifat read-only (mengambil data melalui Model dan menampilkan View) — tidak melakukan perubahan data di database.
+
+- **Dependency:** `TransaksiModel`, `StokModel`, `DistribusiModel`, serta koneksi DB melalui `Config/Database.php`.
+
+- **Metode utama:**
+
+  - `viewKinerjaDonor()`
+
+    - Input: `$_GET['periode']` (format YYYY-MM), default current month jika tidak disediakan.
+    - Action: memanggil `TransaksiModel::getLaporanKinerjaDonor($periode)` untuk mengambil metrik kinerja donor pada periode tersebut.
+    - Output: memanggil View `View/laporan/kinerja_donor.php` dengan array `['laporan' => ..., 'periode' => $periode]`.
+
+  - `viewEvaluasiStok()`
+
+    - Input: tidak ada parameter wajib.
+    - Action: mengambil data stok realtime dan daftar stok kadaluarsa melalui `StokModel::getDashboardStokRealtime()` dan `StokModel::getStokKadaluarsa()`.
+    - Output: memanggil View `View/laporan/evaluasi_stok.php` dengan array `['stok' => ..., 'stok_kadaluarsa' => ...]`.
+
+  - `generateLaporanDistribusi()`
+    - Input: `$_GET['rs_id']` (opsional), `$_GET['tanggal_awal']`, `$_GET['tanggal_akhir']`. Default ke rentang bulan berjalan bila tidak disediakan.
+    - Action: memanggil `DistribusiModel::getLaporanDistribusi($rs_id, $tanggal_awal, $tanggal_akhir)` untuk mengambil baris distribusi sesuai filter; juga mengambil daftar rumah sakit untuk dropdown/label via `getRumahSakit()`.
+    - Output: memanggil View `View/laporan/distribusi.php` dengan data filter dan hasil laporan.
+
+- **Catatan implementasi:**
+  - Semua metode memanggil helper private `view($view, $data = [])` yang mengekstrak `$data` dan menyertakan file view `View/laporan/$view.php`.
+  - Controller ini tidak memodifikasi data (INSERT/UPDATE/DELETE) — hanya mengumpulkan data untuk reporting.
+  - Jika Anda menambahkan format export (CSV/PDF), itu biasanya diimplementasikan sebagai metode tambahan di controller ini.
+
 ---
 
 ## Alur Data & Request-Response
