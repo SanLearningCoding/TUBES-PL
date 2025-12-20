@@ -158,7 +158,7 @@ class DistribusiModel {
 
     public function deleteDistribusi($id_distribusi) {
         try {
-            // Gunakan QueryBuilder untuk soft delete
+            // QueryBuilder untuk soft delete
             $builder = new QueryBuilder($this->db, 'distribusi_darah');
             $rowsAffected = $builder->where('id_distribusi', $id_distribusi)
                                   ->update(['is_deleted' => 1, 'deleted_at' => date('Y-m-d H:i:s')]);

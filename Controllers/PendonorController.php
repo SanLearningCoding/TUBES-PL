@@ -86,13 +86,19 @@ class PendonorController {
         if (empty($nama)) {
             $errors[] = 'Nama wajib diisi.';
         }
-        if (strlen($kontak) < 6) { // Validasi panjang setelah filter
+        if (strlen($kontak) < 6) {
             $errors[] = 'Nomor HP tidak valid. Minimal 6 digit.';
         }
         if (is_null($id_gol_darah)) {
             $errors[] = 'Golongan darah wajib dipilih.';
         }
-
+        // Validasi nomor HP/kontak harus unik
+        $stmt = $this->pendonorModel->getDbConnection()->prepare("SELECT COUNT(*) FROM pendonor WHERE kontak = ? AND is_deleted = 0");
+        $stmt->execute([$kontak]);
+        $exists = intval($stmt->fetchColumn()) > 0;
+        if ($exists) {
+            $errors[] = 'Nomor HP/kontak sudah terdaftar, gunakan nomor lain.';
+        }
         if (!empty($errors)) {
             $_SESSION['flash'] = ['type' => 'danger', 'message' => implode('<br>', $errors), 'icon' => 'exclamation-triangle'];
             header('Location: index.php?action=pendonor_create');
@@ -209,9 +215,26 @@ class PendonorController {
                 $is_layak_status = 2; // SEHAT (hijau)
             }
 
-            // Validasi sederhana
-            if (empty($nama) || strlen($kontak) < 6 || is_null($id_gol_darah)) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Nama, kontak (min. 6 digit), dan golongan darah wajib diisi.', 'icon' => 'exclamation-triangle'];
+            // Validasi sederhana + kontak unik
+            $errors = [];
+            if (empty($nama)) {
+                $errors[] = 'Nama wajib diisi.';
+            }
+            if (strlen($kontak) < 6) {
+                $errors[] = 'Nomor HP tidak valid. Minimal 6 digit.';
+            }
+            if (is_null($id_gol_darah)) {
+                $errors[] = 'Golongan darah wajib dipilih.';
+            }
+            // Validasi nomor HP/kontak harus unik (kecuali milik sendiri)
+            $stmt = $this->pendonorModel->getDbConnection()->prepare("SELECT COUNT(*) FROM pendonor WHERE kontak = ? AND id_pendonor != ? AND is_deleted = 0");
+            $stmt->execute([$kontak, $id]);
+            $exists = intval($stmt->fetchColumn()) > 0;
+            if ($exists) {
+                $errors[] = 'Nomor HP/kontak sudah terdaftar, gunakan nomor lain.';
+            }
+            if (!empty($errors)) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => implode('<br>', $errors), 'icon' => 'exclamation-triangle'];
                 header('Location: index.php?action=pendonor_edit&id=' . $id);
                 exit;
             }

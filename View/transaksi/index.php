@@ -22,9 +22,6 @@ $total_pages = $data['total_pages'] ?? 1; // Ambil dari controller
         <a href="?action=transaksi_create" class="btn btn-create">
             <i class="fas fa-plus me-1"></i>Transaksi Baru
         </a>
-        <a href="?action=transaksi_trash" class="btn btn-outline-secondary ms-2">
-            <i class="fas fa-archive me-1"></i>Arsip
-        </a>
     </div>
 </div>
 
@@ -83,9 +80,6 @@ $total_pages = $data['total_pages'] ?? 1; // Ambil dari controller
                                 <a href="?action=transaksi_edit&id=<?= $transaksi['id_transaksi'] ?>" class="btn btn-warning btn-sm me-1">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button onclick="deleteItem(<?= $transaksi['id_transaksi'] ?>,'transaksi_delete','transaksi', event)" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </td>
                         </tr>
                         <?php endforeach; ?>

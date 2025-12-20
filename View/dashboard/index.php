@@ -28,12 +28,12 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $total_stok = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
 
-// transaksi hari ini dan distribusi bulan ini (tidak tergantung schema stok)
+// transaksi dan distribusi bulan ini (bukan hari ini)
 // ONLY count non-deleted transactions to sync with Transaksi page
-$query = "SELECT COUNT(*) as total FROM transaksi_donasi WHERE DATE(tanggal_donasi) = CURDATE() AND is_deleted = 0";
+$query = "SELECT COUNT(*) as total FROM transaksi_donasi WHERE DATE_FORMAT(tanggal_donasi, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m') AND is_deleted = 0";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$transaksi_hari_ini = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
+$transaksi_bulan_ini = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
 
 $query = "SELECT COUNT(*) as total FROM distribusi_darah WHERE DATE_FORMAT(tanggal_distribusi, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')";
 $stmt = $db->prepare($query);
@@ -157,8 +157,8 @@ $distribusi_bulan_ini = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="me-2">
-                    <div class="label">Transaksi Hari Ini</div>
-                    <div class="value card-metric"><?= $transaksi_hari_ini ?></div>
+                    <div class="label">Transaksi Bulan Ini</div>
+                    <div class="value card-metric"><?= $transaksi_bulan_ini ?></div>
                 </div>
                 <div class="align-self-center ms-auto text-end">
                     <div class="icon-circle bg-light text-danger p-2 rounded-circle">
@@ -250,7 +250,7 @@ function refreshDashboard() {
             .then(data => {
             document.getElementById('countPendonor').textContent = data.total_pendonor;
             document.getElementById('countStok').textContent = data.total_stok;
-            document.getElementById('countTransToday').textContent = data.transaksi_hari_ini;
+            document.getElementById('countTransToday').textContent = data.transaksi_bulan_ini;
             document.getElementById('countDistribThisM').textContent = data.distribusi_bulan_ini;
             // Update group table
             // Replace tbody in one operation to minimize layout reflow and jank

@@ -11,6 +11,11 @@ class PendonorModel {
         $this->db = $database->getConnection();
     }
 
+    // Tambahkan getter untuk akses koneksi DB (untuk validasi unik kontak di controller)
+    public function getDbConnection() {
+        return $this->db;
+    }
+
     private function hasColumn($table, $column) {
         $stmt = $this->db->prepare("SELECT COUNT(*) as cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
         $stmt->execute([$table, $column]);
